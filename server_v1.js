@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const PORT = 3000;
+const MAIN_DIR = '/chess_sol_puzzles';
 
 // Serve static files from public directory
 app.use(express.static('public'));
@@ -42,6 +43,10 @@ try {
 } catch (error) {
   console.error('Error loading puzzles:', error.message);
 }
+
+app.get(MAIN_DIR+'/', (req, res) => {
+  res.send('Entrace Point - Hello world');
+});
 
 // API endpoint to get a random puzzle
 app.get('/api/puzzle/random', (req, res) => {

@@ -107,6 +107,8 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const PORT = 3000;
+const MAIN_DIR = '/chess_sol_puzzles';
+
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -158,6 +160,10 @@ if (fs.existsSync(csvPath)) {
 } else {
   console.error('✗ puzzles_part_1.csv not found in:', __dirname);
 }
+
+app.get(MAIN_DIR+'/', (req, res) => {
+  res.send('Entrace Point - Hello world');
+});
 
 // API endpoint to get a random puzzle
 app.get('/api/puzzle/random', (req, res) => {
