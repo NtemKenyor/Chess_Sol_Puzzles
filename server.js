@@ -166,7 +166,7 @@ app.get(MAIN_DIR+'/', (req, res) => {
 });
 
 // API endpoint to get a random puzzle
-app.get('/api/puzzle/random', (req, res) => {
+app.get(MAIN_DIR+'/api/puzzle/random', (req, res) => {
   if (puzzles.length === 0) {
     return res.status(500).json({ error: 'No puzzles available' });
   }
@@ -185,7 +185,7 @@ app.get('/api/puzzle/random', (req, res) => {
 });
 
 // API endpoint to verify a move
-app.post('/api/puzzle/verify', (req, res) => {
+app.post(MAIN_DIR+'/api/puzzle/verify', (req, res) => {
   const { puzzleId, moveIndex, move } = req.body;
   
   const puzzle = puzzles.find(p => p.id === puzzleId);
