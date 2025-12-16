@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzle Master</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tagline {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .game-area {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .info-panel {
+            margin-bottom: 25px;
+        }
+
+        .puzzle-info {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .move-indicator {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            margin-top: 10px;
+            background: rgba(255,255,255,0.3);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.3s ease;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        #chessboard {
+            width: 560px;
+            height: 560px;
+            border: 3px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+        }
+
+        .square {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            transition: all 0.2s;
+        }
+
+        .square.light {
+            background-color: #f0d9b5;
+        }
+
+        .square.dark {
+            background-color: #b58863;
+        }
+
+        .square.selected {
+            background-color: #baca44 !important;
+            box-shadow: inset 0 0 0 3px #9dad2d;
+        }
+
+        .square.highlight {
+            background-color: rgba(186, 202, 68, 0.5) !important;
+        }
+
+        .square.last-move {
+            background-color: rgba(255, 255, 0, 0.4) !important;
+        }
+
+        .square.correct-move {
+            animation: correctPulse 0.6s ease;
+        }
+
+        .square.wrong-move {
+            animation: wrongShake 0.5s ease;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); background-color: rgba(76, 175, 80, 0.5); }
+            50% { transform: scale(1.05); background-color: rgba(76, 175, 80, 0.8); }
+        }
+
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); background-color: rgba(244, 67, 54, 0.5); }
+            25% { transform: translateX(-10px); background-color: rgba(244, 67, 54, 0.7); }
+            75% { transform: translateX(10px); background-color: rgba(244, 67, 54, 0.7); }
+        }
+
+        .square:hover {
+            filter: brightness(1.1);
+        }
+
+        .piece {
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feedback.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .feedback.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            animation: modalSlide 0.3s;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .modal-content p {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            #chessboard {
+                width: 90vw;
+                height: 90vw;
+                max-width: 500px;
+                max-height: 500px;
+            }
+            
+            .square {
+                font-size: 2em;
+            }
+            
+            .puzzle-info {
+                flex-direction: column;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♔ Chess Puzzle Master ♔</h1>
+            <p class="tagline">Sharpen your tactical skills</p>
+        </header>
+
+        <div class="game-area">
+            <div class="info-panel">
+                <div class="puzzle-info">
+                    <div class="info-item">
+                        <span class="label">Rating:</span>
+                        <span id="rating" class="value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Themes:</span>
+                        <span id="themes" class="value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Progress:</span>
+                        <span id="progress" class="value">0/0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Time:</span>
+                        <span id="timer" class="value">120s</span>
+                    </div>
+                </div>
+                <div class="move-indicator">
+                    <span id="turn-indicator">Loading puzzle...</span>
+                    <div class="progress-bar">
+                        <div id="progressBar" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="chessboard"></div>
+            </div>
+
+            <div class="controls">
+                <button id="newPuzzle" class="btn btn-primary">New Puzzle</button>
+                <button id="hint" class="btn btn-secondary">Hint</button>
+                <button id="reset" class="btn btn-secondary">Reset</button>
+            </div>
+
+            <div id="feedback" class="feedback hidden"></div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <button id="modalClose" class="btn btn-primary">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CHESS GAME LOGIC ====================
+        class ChessGame {
+            constructor() {
+                this.board = [];
+                this.selectedSquare = null;
+                this.currentFEN = '';
+                this.isWhiteTurn = true;
+            }
+
+            parseFEN(fen) {
+                this.board = Array(8).fill(null).map(() => Array(8).fill(null));
+                const parts = fen.split(' ');
+                const position = parts[0];
+                const rows = position.split('/');
+                
+                for (let i = 0; i < 8; i++) {
+                    let col = 0;
+                    for (let char of rows[i]) {
+                        if (char >= '1' && char <= '8') {
+                            col += parseInt(char);
+                        } else {
+                            this.board[i][col] = char;
+                            col++;
+                        }
+                    }
+                }
+                
+                this.isWhiteTurn = parts[1] === 'w';
+                this.currentFEN = fen;
+            }
+
+            getPiece(row, col) {
+                if (row < 0 || row > 7 || col < 0 || col > 7) return null;
+                return this.board[row][col];
+            }
+
+            setPiece(row, col, piece) {
+                if (row >= 0 && row <= 7 && col >= 0 && col <= 7) {
+                    this.board[row][col] = piece;
+                }
+            }
+
+            isWhitePiece(piece) {
+                return piece && piece === piece.toUpperCase();
+            }
+
+            algebraicToCoords(algebraic) {
+                const file = algebraic.charCodeAt(0) - 97;
+                const rank = 8 - parseInt(algebraic[1]);
+                return { row: rank, col: file };
+            }
+
+            coordsToAlgebraic(row, col) {
+                const file = String.fromCharCode(97 + col);
+                const rank = (8 - row).toString();
+                return file + rank;
+            }
+
+            makeMove(from, to) {
+                const fromCoords = this.algebraicToCoords(from);
+                const toCoords = this.algebraicToCoords(to);
+                
+                const piece = this.getPiece(fromCoords.row, fromCoords.col);
+                if (!piece) return false;
+                
+                let movingPiece = piece;
+                if (to.length > 2) {
+                    movingPiece = to[2];
+                    if (this.isWhitePiece(piece)) {
+                        movingPiece = movingPiece.toUpperCase();
+                    }
+                }
+                
+                this.setPiece(toCoords.row, toCoords.col, movingPiece);
+                this.setPiece(fromCoords.row, fromCoords.col, null);
+                
+                this.isWhiteTurn = !this.isWhiteTurn;
+                return true;
+            }
+
+            getPieceUnicode(piece) {
+                const pieces = {
+                    'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+                    'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+                };
+                return pieces[piece] || '';
+            }
+
+            getPossibleMoves(row, col) {
+                const moves = [];
+                const piece = this.getPiece(row, col);
+                if (!piece) return moves;
+                
+                const isWhite = this.isWhitePiece(piece);
+                
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const target = this.getPiece(r, c);
+                        if (!target || this.isWhitePiece(target) !== isWhite) {
+                            moves.push({ row: r, col: c });
+                        }
+                    }
+                }
+                
+                return moves;
+            }
+        }
+
+        // ==================== APPLICATION LOGIC ====================
+        const game = new ChessGame();
+        let currentPuzzle = null;
+        let currentMoveIndex = 0;
+        let playerMoveIndex = 0;
+        let selectedSquare = null;
+        let timer = null;
+        let timeLeft = 120;
+        let lastMoveSquares = [];
+
+        async function init() {
+            setupEventListeners();
+            await loadNewPuzzle();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('newPuzzle').addEventListener('click', loadNewPuzzle);
+            document.getElementById('hint').addEventListener('click', showHint);
+            document.getElementById('reset').addEventListener('click', resetPuzzle);
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+        }
+
+        async function loadNewPuzzle() {
+            try {
+                const response = await fetch('/api/puzzle/random');
+                const puzzle = await response.json();
+                
+                if (puzzle.error) {
+                    showFeedback('Error: ' + puzzle.error, 'error');
+                    return;
+                }
+                
+                currentPuzzle = puzzle;
+                currentMoveIndex = 0;
+                playerMoveIndex = 0;
+                selectedSquare = null;
+                lastMoveSquares = [];
+                
+                game.parseFEN(puzzle.fen);
+                
+                document.getElementById('rating').textContent = puzzle.rating;
+                document.getElementById('themes').textContent = puzzle.themes || 'Various';
+                document.getElementById('progress').textContent = `0/${Math.ceil(puzzle.totalMoves / 2)}`;
+                updateProgressBar(0, puzzle.totalMoves);
+                
+                renderBoard();
+                hideFeedback();
+                startTimer();
+                
+                setTimeout(() => makeOpponentMove(), 800);
+            } catch (error) {
+                showFeedback('Error loading puzzle. Please check your CSV file.', 'error');
+            }
+        }
+
+        async function makeOpponentMove() {
+            if (!currentPuzzle || currentMoveIndex >= currentPuzzle.moves.length) return;
+            
+            const move = currentPuzzle.moves[currentMoveIndex];
+            const from = move.substring(0, 2);
+            const to = move.substring(2);
+            
+            lastMoveSquares = [from, to];
+            game.makeMove(from, to);
+            renderBoard();
+            currentMoveIndex++;
+            
+            const playerTurn = game.isWhiteTurn ? 'White' : 'Black';
+            document.getElementById('turn-indicator').textContent = 
+                `${playerTurn} to move - Find the best move! (Move ${playerMoveIndex + 1})`;
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('chessboard');
+            board.innerHTML = '';
+            
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    
+                    const algebraic = game.coordsToAlgebraic(row, col);
+                    square.dataset.square = algebraic;
+                    
+                    if (lastMoveSquares.includes(algebraic)) {
+                        square.classList.add('last-move');
+                    }
+                    
+                    const piece = game.getPiece(row, col);
+                    if (piece) {
+                        const pieceElement = document.createElement('span');
+                        pieceElement.className = 'piece';
+                        pieceElement.textContent = game.getPieceUnicode(piece);
+                        square.appendChild(pieceElement);
+                    }
+                    
+                    square.addEventListener('click', handleSquareClick);
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        async function handleSquareClick(event) {
+            const square = event.currentTarget;
+            const row = parseInt(square.dataset.row);
+            const col = parseInt(square.dataset.col);
+            const algebraic = square.dataset.square;
+            
+            if (selectedSquare) {
+                const from = selectedSquare;
+                const to = algebraic;
+                
+                if (from !== to) {
+                    await attemptMove(from, to);
+                }
+                
+                document.querySelectorAll('.square').forEach(s => {
+                    s.classList.remove('selected', 'highlight');
+                });
+                selectedSquare = null;
+            } else {
+                const piece = game.getPiece(row, col);
+                if (piece && game.isWhitePiece(piece) === game.isWhiteTurn) {
+                    selectedSquare = algebraic;
+                    square.classList.add('selected');
+                    
+                    const moves = game.getPossibleMoves(row, col);
+                    moves.forEach(move => {
+                        const targetSquare = document.querySelector(
+                            `[data-square="${game.coordsToAlgebraic(move.row, move.col)}"]`
+                        );
+                        if (targetSquare) {
+                            targetSquare.classList.add('highlight');
+                        }
+                    });
+                }
+            }
+        }
+
+        async function attemptMove(from, to) {
+            const move = from + to;
+            
+            try {
+                const response = await fetch('/api/puzzle/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        puzzleId: currentPuzzle.id,
+                        moveIndex: currentMoveIndex,
+                        move: move
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Visual feedback on the squares
+                const fromSquare = document.querySelector(`[data-square="${from}"]`);
+                const toSquare = document.querySelector(`[data-square="${to}"]`);
+                
+                if (result.correct) {
+                    toSquare.classList.add('correct-move');
+                    setTimeout(() => toSquare.classList.remove('correct-move'), 600);
+                    
+                    lastMoveSquares = [from, to];
+                    game.makeMove(from, to);
+                    renderBoard();
+                    currentMoveIndex++;
+                    playerMoveIndex++;
+                    
+                    const progressMsg = `Move ${playerMoveIndex}/${Math.ceil(currentPuzzle.totalMoves / 2)} correct!`;
+                    showFeedback(`✓ ${progressMsg} Great move!`, 'success');
+                    
+                    updateProgressBar(currentMoveIndex, currentPuzzle.totalMoves);
+                    document.getElementById('progress').textContent = 
+                        `${playerMoveIndex}/${Math.ceil(currentPuzzle.totalMoves / 2)}`;
+                    
+                    if (result.complete) {
+                        stopTimer();
+                        setTimeout(() => {
+                            showModal('🎉 Puzzle Solved!', 
+                                `Congratulations! You solved the puzzle in ${playerMoveIndex} moves!`);
+                        }, 1000);
+                    } else if (result.nextMove) {
+                        setTimeout(async () => {
+                            await makeOpponentMove();
+                            hideFeedback();
+                        }, 1200);
+                    }
+                } else {
+                    toSquare.classList.add('wrong-move');
+                    setTimeout(() => toSquare.classList.remove('wrong-move'), 500);
+                    
+                    showFeedback('✗ Wrong move! Try again.', 'error');
+                    setTimeout(hideFeedback, 2000);
+                }
+            } catch (error) {
+                showFeedback('Error verifying move. Please try again.', 'error');
+            }
+        }
+
+        function updateProgressBar(current, total) {
+            const percentage = (current / total) * 100;
+            document.getElementById('progressBar').style.width = percentage + '%';
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+            feedback.classList.remove('hidden');
+        }
+
+        function hideFeedback() {
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('hidden');
+        }
+
+        function showModal(title, message) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            loadNewPuzzle();
+        }
+
+        function startTimer() {
+            stopTimer();
+            timeLeft = 120;
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    stopTimer();
+                    showModal('⏰ Time\'s Up!', 'Better luck next time! Want to try another puzzle?');
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function showHint() {
+            if (currentPuzzle && currentMoveIndex < currentPuzzle.moves.length) {
+                const nextMove = currentPuzzle.moves[currentMoveIndex];
+                const from = nextMove.substring(0, 2);
+                showFeedback(`💡 Hint: Look at piece on square ${from.toUpperCase()}`, 'info');
+                setTimeout(hideFeedback, 3000);
+            }
+        }
+
+        function resetPuzzle() {
+            if (currentPuzzle) {
+                currentMoveIndex = 0;
+                playerMoveIndex = 0;
+                selectedSquare = null;
+                lastMoveSquares = [];
+                game.parseFEN(currentPuzzle.fen);
+                renderBoard();
+                hideFeedback();
+                startTimer();
+                updateProgressBar(0, currentPuzzle.totalMoves);
+                document.getElementById('progress').textContent = `0/${Math.ceil(currentPuzzle.totalMoves / 2)}`;
+                
+                setTimeout(() => makeOpponentMove(), 800);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

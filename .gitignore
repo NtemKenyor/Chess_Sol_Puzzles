@@ -1,0 +1,11 @@
+node_modules/*
+puzzles_db/*
+dist/*
+.env
+*.env
+.DS_Store
+.vscode/
+.idea/
+coverage/
+*.pdf
+.logs

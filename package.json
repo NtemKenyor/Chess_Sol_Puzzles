@@ -1,0 +1,24 @@
+{
+  "name": "Chess-Sol-Puzzles",
+  "version": "1.0.0",
+  "description": "Chess puzzle training platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "chess",
+    "puzzle",
+    "training"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "fs-extra": "^11.3.2",
+    "mysql2": "^3.15.3"
+  }
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzle Master</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♔ Chess Puzzle Master ♔</h1>
+            <p class="tagline">Sharpen your tactical skills</p>
+        </header>
+
+        <div class="game-area">
+            <div class="info-panel">
+                <div class="puzzle-info">
+                    <div class="info-item">
+                        <span class="label">Rating:</span>
+                        <span id="rating" class="value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Themes:</span>
+                        <span id="themes" class="value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Time:</span>
+                        <span id="timer" class="value">120s</span>
+                    </div>
+                </div>
+                <div class="move-indicator">
+                    <span id="turn-indicator">Your turn - Find the best move!</span>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="chessboard"></div>
+            </div>
+
+            <div class="controls">
+                <button id="newPuzzle" class="btn btn-primary">New Puzzle</button>
+                <button id="hint" class="btn btn-secondary">Hint</button>
+                <button id="reset" class="btn btn-secondary">Reset</button>
+            </div>
+
+            <div id="feedback" class="feedback hidden"></div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <button id="modalClose" class="btn btn-primary">Continue</button>
+        </div>
+    </div>
+
+    <script src="chess.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

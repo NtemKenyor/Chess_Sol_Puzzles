@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzle Master</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #6366f1;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            transition: right 0.3s ease;
+            z-index: 200;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-section h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Game Area */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-icon {
+            font-size: 1.25rem;
+        }
+
+        .status-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Turn Indicator */
+        .turn-indicator {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .turn-text {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s ease;
+        }
+
+        /* Board Container */
+        .board-wrapper {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #chessboard {
+            width: min(calc(100vw - 2rem), 560px);
+            height: min(calc(100vw - 2rem), 560px);
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+        }
+
+        .square {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            transition: all 0.15s;
+        }
+
+        .square.light {
+            background-color: #f0d9b5;
+        }
+
+        .square.dark {
+            background-color: #b58863;
+        }
+
+        .square.selected {
+            background-color: #baca44 !important;
+            box-shadow: inset 0 0 0 3px #9dad2d;
+        }
+
+        .square.highlight {
+            background-color: rgba(186, 202, 68, 0.5) !important;
+        }
+
+        .square.last-move {
+            background-color: rgba(255, 255, 0, 0.4) !important;
+        }
+
+        .square.correct-move {
+            animation: correctPulse 0.6s ease;
+        }
+
+        .square.wrong-move {
+            animation: wrongShake 0.5s ease;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); background-color: rgba(16, 185, 129, 0.6); }
+            50% { transform: scale(1.05); background-color: rgba(16, 185, 129, 0.9); }
+        }
+
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); background-color: rgba(239, 68, 68, 0.6); }
+            25% { transform: translateX(-5px); background-color: rgba(239, 68, 68, 0.8); }
+            75% { transform: translateX(5px); background-color: rgba(239, 68, 68, 0.8); }
+        }
+
+        .square:active {
+            transform: scale(0.95);
+        }
+
+        .piece {
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-icon {
+            background: var(--bg-hover);
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            flex: 0;
+            min-width: auto;
+        }
+
+        /* Feedback */
+        .feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feedback.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 2px solid var(--success);
+        }
+
+        .feedback.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+            border: 2px solid var(--error);
+        }
+
+        .feedback.info {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            animation: modalSlide 0.3s;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .modal-content p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Ad Modal */
+        .ad-modal {
+            background: var(--bg-dark);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .ad-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .ad-content {
+            background: var(--bg-card);
+            padding: 3rem 2rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .ad-placeholder {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .ad-text {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .ad-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .ad-controls .btn {
+            flex: 1;
+        }
+
+        .skip-timer {
+            background: var(--bg-hover);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        @media (min-width: 768px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+
+            #chessboard {
+                width: 560px;
+                height: 560px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.75rem 1rem;
+            }
+
+            .logo {
+                font-size: 1rem;
+            }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .status-bar {
+                padding: 0.75rem;
+                gap: 0.5rem;
+            }
+
+            .status-item {
+                font-size: 0.875rem;
+            }
+
+            .turn-indicator {
+                padding: 0.75rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .turn-text {
+                font-size: 0.95rem;
+            }
+
+            .board-wrapper {
+                padding: 0.5rem;
+            }
+
+            .controls {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+                min-width: 100px;
+            }
+
+            .modal-content, .ad-modal {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <span>♟️</span>
+            <span>Chess Puzzle Master</span>
+        </div>
+        <button class="menu-btn" id="menuBtn">☰</button>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>📊 Stats</h2>
+            <button class="close-btn" id="closeSidebar">✕</button>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>Current Puzzle</h3>
+            <div class="stat-item">
+                <span class="stat-label">Rating</span>
+                <span class="stat-value" id="sidebarRating">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Themes</span>
+                <span class="stat-value" id="sidebarThemes">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Progress</span>
+                <span class="stat-value" id="sidebarProgress">-</span>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>Actions</h3>
+            <button class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;" id="sidebarShare">
+                🔗 Share Puzzle
+            </button>
+            <button class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;" id="sidebarRemoveAds">
+                🚫 Remove Ads - $10
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="game-layout">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-icon">⭐</span>
+                    <div class="status-text">
+                        <span class="status-label">Rating</span>
+                        <span class="status-value" id="rating">-</span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <span class="status-icon">🎯</span>
+                    <div class="status-text">
+                        <span class="status-label">Themes</span>
+                        <span class="status-value" id="themes">-</span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <span class="status-icon">📈</span>
+                    <div class="status-text">
+                        <span class="status-label">Progress</span>
+                        <span class="status-value" id="progress">0/0</span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <span class="status-icon">⏱️</span>
+                    <div class="status-text">
+                        <span class="status-label">Time</span>
+                        <span class="status-value" id="timer">2:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Turn Indicator -->
+            <div class="turn-indicator">
+                <div class="turn-text" id="turnIndicator">Loading puzzle...</div>
+                <div class="progress-bar">
+                    <div id="progressBar" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Board -->
+            <div class="board-wrapper">
+                <div id="chessboard"></div>
+                
+                <div class="controls">
+                    <button id="newPuzzle" class="btn btn-primary">▶️ Next</button>
+                    <button id="hint" class="btn btn-icon">💡</button>
+                    <button id="reset" class="btn btn-icon">🔄</button>
+                    <button id="share" class="btn btn-icon">🔗</button>
+                </div>
+
+                <div id="feedback" class="feedback hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <button id="modalClose" class="btn btn-primary">Continue</button>
+        </div>
+    </div>
+
+    <!-- Ad Modal -->
+    <div id="adModal" class="modal hidden">
+        <div class="ad-modal">
+            <div class="ad-header">
+                <div class="ad-title">📺 Advertisement</div>
+            </div>
+            
+            <div class="ad-content">
+                <div class="ad-placeholder">📢</div>
+                <div class="ad-text">Advertisement Space<br>Support us by watching this ad or upgrade to ad-free!</div>
+            </div>
+
+            <div class="skip-timer" id="skipTimer">
+                Please wait <span id="skipCountdown">3</span> seconds...
+            </div>
+
+            <div class="ad-controls">
+                <button id="skipAd" class="btn btn-secondary" disabled>Skip Ad</button>
+                <button id="removeAds" class="btn btn-primary">Remove Ads - $10</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CHESS GAME LOGIC ====================
+        class ChessGame {
+            constructor() {
+                this.board = [];
+                this.selectedSquare = null;
+                this.currentFEN = '';
+                this.isWhiteTurn = true;
+            }
+
+            parseFEN(fen) {
+                this.board = Array(8).fill(null).map(() => Array(8).fill(null));
+                const parts = fen.split(' ');
+                const position = parts[0];
+                const rows = position.split('/');
+                
+                for (let i = 0; i < 8; i++) {
+                    let col = 0;
+                    for (let char of rows[i]) {
+                        if (char >= '1' && char <= '8') {
+                            col += parseInt(char);
+                        } else {
+                            this.board[i][col] = char;
+                            col++;
+                        }
+                    }
+                }
+                
+                this.isWhiteTurn = parts[1] === 'w';
+                this.currentFEN = fen;
+            }
+
+            getPiece(row, col) {
+                if (row < 0 || row > 7 || col < 0 || col > 7) return null;
+                return this.board[row][col];
+            }
+
+            setPiece(row, col, piece) {
+                if (row >= 0 && row <= 7 && col >= 0 && col <= 7) {
+                    this.board[row][col] = piece;
+                }
+            }
+
+            isWhitePiece(piece) {
+                return piece && piece === piece.toUpperCase();
+            }
+
+            algebraicToCoords(algebraic) {
+                const file = algebraic.charCodeAt(0) - 97;
+                const rank = 8 - parseInt(algebraic[1]);
+                return { row: rank, col: file };
+            }
+
+            coordsToAlgebraic(row, col) {
+                const file = String.fromCharCode(97 + col);
+                const rank = (8 - row).toString();
+                return file + rank;
+            }
+
+            makeMove(from, to) {
+                const fromCoords = this.algebraicToCoords(from);
+                const toCoords = this.algebraicToCoords(to);
+                
+                const piece = this.getPiece(fromCoords.row, fromCoords.col);
+                if (!piece) return false;
+                
+                let movingPiece = piece;
+                if (to.length > 2) {
+                    movingPiece = to[2];
+                    if (this.isWhitePiece(piece)) {
+                        movingPiece = movingPiece.toUpperCase();
+                    }
+                }
+                
+                this.setPiece(toCoords.row, toCoords.col, movingPiece);
+                this.setPiece(fromCoords.row, fromCoords.col, null);
+                
+                this.isWhiteTurn = !this.isWhiteTurn;
+                return true;
+            }
+
+            getPieceUnicode(piece) {
+                const pieces = {
+                    'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+                    'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+                };
+                return pieces[piece] || '';
+            }
+
+            getPossibleMoves(row, col) {
+                const moves = [];
+                const piece = this.getPiece(row, col);
+                if (!piece) return moves;
+                
+                const isWhite = this.isWhitePiece(piece);
+                
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const target = this.getPiece(r, c);
+                        if (!target || this.isWhitePiece(target) !== isWhite) {
+                            moves.push({ row: r, col: c });
+                        }
+                    }
+                }
+                
+                return moves;
+            }
+        }
+
+        // ==================== APPLICATION LOGIC ====================
+        const game = new ChessGame();
+        let currentPuzzle = null;
+        let currentMoveIndex = 0;
+        let playerMoveIndex = 0;
+        let selectedSquare = null;
+        let timer = null;
+        let timeLeft = 120;
+        let lastMoveSquares = [];
+        let puzzlesSolved = 0;
+
+        // Ad management
+        function getPuzzleCount() {
+            return parseInt(localStorage.getItem('puzzleCount') || '0');
+        }
+
+        function incrementPuzzleCount() {
+            const count = getPuzzleCount() + 1;
+            localStorage.setItem('puzzleCount', count.toString());
+            return count;
+        }
+
+        function hasAdFreeAccess() {
+            return localStorage.getItem('gaToken') === 'active';
+        }
+
+        function shouldShowAd() {
+            if (hasAdFreeAccess()) return false;
+            const count = getPuzzleCount();
+            return count > 0 && count % (Math.floor(Math.random() * 3) + 2) === 0;
+        }
+
+        function showAdModal() {
+            const modal = document.getElementById('adModal');
+            const skipBtn = document.getElementById('skipAd');
+            const countdown = document.getElementById('skipCountdown');
+            let seconds = 3;
+
+            modal.classList.remove('hidden');
+            skipBtn.disabled = true;
+
+            const countdownInterval = setInterval(() => {
+                seconds--;
+                countdown.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    skipBtn.disabled = false;
+                    document.getElementById('skipTimer').textContent = 'You can now skip';
+                }
+            }, 1000);
+        }
+
+        function closeAdModal() {
+            document.getElementById('adModal').classList.add('hidden');
+            document.getElementById('skipTimer').textContent = 'Please wait 3 seconds...';
+            document.getElementById('skipCountdown').textContent = '3';
+        }
+
+        // Get puzzle ID from URL
+        function getPuzzleIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('puzzle');
+        }
+
+        // Update URL with puzzle ID
+        function updateUrlWithPuzzle(puzzleId) {
+            const url = new URL(window.location);
+            url.searchParams.set('puzzle', puzzleId);
+            window.history.pushState({}, '', url);
+        }
+
+        // Share puzzle
+        function sharePuzzle() {
+            if (!currentPuzzle) return;
+            
+            const url = `${window.location.origin}${window.location.pathname}?puzzle=${currentPuzzle.id}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Chess Puzzle Challenge',
+                    text: `Can you solve this ${currentPuzzle.rating} rated chess puzzle?`,
+                    url: url
+                }).catch(() => {
+                    copyToClipboard(url);
+                });
+            } else {
+                copyToClipboard(url);
+            }
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showFeedback('🔗 Link copied to clipboard!', 'success');
+                });
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showFeedback('🔗 Link copied to clipboard!', 'success');
+            }
+        }
+
+        async function init() {
+            setupEventListeners();
+            const puzzleId = getPuzzleIdFromUrl();
+            
+            if (puzzleId) {
+                await loadSpecificPuzzle(puzzleId);
+            } else {
+                await loadNewPuzzle();
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('newPuzzle').addEventListener('click', handleNextPuzzle);
+            document.getElementById('hint').addEventListener('click', showHint);
+            document.getElementById('reset').addEventListener('click', resetPuzzle);
+            document.getElementById('share').addEventListener('click', sharePuzzle);
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('menuBtn').addEventListener('click', toggleSidebar);
+            document.getElementById('closeSidebar').addEventListener('click', toggleSidebar);
+            document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+            document.getElementById('sidebarShare').addEventListener('click', () => {
+                sharePuzzle();
+                toggleSidebar();
+            });
+            document.getElementById('sidebarRemoveAds').addEventListener('click', redirectToPayment);
+            document.getElementById('skipAd').addEventListener('click', closeAdModal);
+            document.getElementById('removeAds').addEventListener('click', redirectToPayment);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function redirectToPayment() {
+            window.location.href = 'payment.html?plan=ga-token';
+        }
+
+        function handleNextPuzzle() {
+            if (shouldShowAd()) {
+                showAdModal();
+                setTimeout(() => {
+                    closeAdModal();
+                    loadNewPuzzle();
+                }, 100);
+            } else {
+                loadNewPuzzle();
+            }
+        }
+
+        async function loadSpecificPuzzle(puzzleId) {
+            try {
+                const response = await fetch(`/api/puzzle/${puzzleId}`);
+                const puzzle = await response.json();
+                
+                if (puzzle.error) {
+                    showFeedback('Puzzle not found, loading random puzzle...', 'info');
+                    await loadNewPuzzle();
+                    return;
+                }
+                
+                initializePuzzle(puzzle);
+            } catch (error) {
+                showFeedback('Error loading puzzle, trying random...', 'error');
+                await loadNewPuzzle();
+            }
+        }
+
+        async function loadNewPuzzle() {
+            try {
+                const response = await fetch('/api/puzzle/random');
+                const puzzle = await response.json();
+                
+                if (puzzle.error) {
+                    showFeedback('Error: ' + puzzle.error, 'error');
+                    return;
+                }
+                
+                updateUrlWithPuzzle(puzzle.id);
+                initializePuzzle(puzzle);
+            } catch (error) {
+                showFeedback('Error loading puzzle. Please check your connection.', 'error');
+            }
+        }
+
+        function initializePuzzle(puzzle) {
+            currentPuzzle = puzzle;
+            currentMoveIndex = 0;
+            playerMoveIndex = 0;
+            selectedSquare = null;
+            lastMoveSquares = [];
+            
+            game.parseFEN(puzzle.fen);
+            
+            const rating = puzzle.rating;
+            const themes = puzzle.themes || 'Various';
+            const totalPlayerMoves = Math.ceil(puzzle.totalMoves / 2);
+            
+            document.getElementById('rating').textContent = rating;
+            document.getElementById('themes').textContent = themes;
+            document.getElementById('progress').textContent = `0/${totalPlayerMoves}`;
+            
+            document.getElementById('sidebarRating').textContent = rating;
+            document.getElementById('sidebarThemes').textContent = themes;
+            document.getElementById('sidebarProgress').textContent = `0/${totalPlayerMoves}`;
+            
+            updateProgressBar(0, puzzle.totalMoves);
+            
+            renderBoard();
+            hideFeedback();
+            startTimer();
+            
+            setTimeout(() => makeOpponentMove(), 800);
+        }
+
+        async function makeOpponentMove() {
+            if (!currentPuzzle || currentMoveIndex >= currentPuzzle.moves.length) return;
+            
+            const move = currentPuzzle.moves[currentMoveIndex];
+            const from = move.substring(0, 2);
+            const to = move.substring(2);
+            
+            lastMoveSquares = [from, to];
+            game.makeMove(from, to);
+            renderBoard();
+            currentMoveIndex++;
+            
+            const playerTurn = game.isWhiteTurn ? 'White' : 'Black';
+            document.getElementById('turnIndicator').textContent = 
+                `${playerTurn} to move - Find the best move! (Move ${playerMoveIndex + 1})`;
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('chessboard');
+            board.innerHTML = '';
+            
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    
+                    const algebraic = game.coordsToAlgebraic(row, col);
+                    square.dataset.square = algebraic;
+                    
+                    if (lastMoveSquares.includes(algebraic)) {
+                        square.classList.add('last-move');
+                    }
+                    
+                    const piece = game.getPiece(row, col);
+                    if (piece) {
+                        const pieceElement = document.createElement('span');
+                        pieceElement.className = 'piece';
+                        pieceElement.textContent = game.getPieceUnicode(piece);
+                        square.appendChild(pieceElement);
+                    }
+                    
+                    square.addEventListener('click', handleSquareClick);
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        async function handleSquareClick(event) {
+            const square = event.currentTarget;
+            const row = parseInt(square.dataset.row);
+            const col = parseInt(square.dataset.col);
+            const algebraic = square.dataset.square;
+            
+            if (selectedSquare) {
+                const from = selectedSquare;
+                const to = algebraic;
+                
+                if (from !== to) {
+                    await attemptMove(from, to);
+                }
+                
+                document.querySelectorAll('.square').forEach(s => {
+                    s.classList.remove('selected', 'highlight');
+                });
+                selectedSquare = null;
+            } else {
+                const piece = game.getPiece(row, col);
+                if (piece && game.isWhitePiece(piece) === game.isWhiteTurn) {
+                    selectedSquare = algebraic;
+                    square.classList.add('selected');
+                    
+                    const moves = game.getPossibleMoves(row, col);
+                    moves.forEach(move => {
+                        const targetSquare = document.querySelector(
+                            `[data-square="${game.coordsToAlgebraic(move.row, move.col)}"]`
+                        );
+                        if (targetSquare) {
+                            targetSquare.classList.add('highlight');
+                        }
+                    });
+                }
+            }
+        }
+
+        async function attemptMove(from, to) {
+            const move = from + to;
+            
+            try {
+                const response = await fetch('/api/puzzle/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        puzzleId: currentPuzzle.id,
+                        moveIndex: currentMoveIndex,
+                        move: move
+                    })
+                });
+                
+                const result = await response.json();
+                
+                const fromSquare = document.querySelector(`[data-square="${from}"]`);
+                const toSquare = document.querySelector(`[data-square="${to}"]`);
+                
+                if (result.correct) {
+                    toSquare.classList.add('correct-move');
+                    setTimeout(() => toSquare.classList.remove('correct-move'), 600);
+                    
+                    lastMoveSquares = [from, to];
+                    game.makeMove(from, to);
+                    renderBoard();
+                    currentMoveIndex++;
+                    playerMoveIndex++;
+                    
+                    const totalPlayerMoves = Math.ceil(currentPuzzle.totalMoves / 2);
+                    const progressMsg = `Move ${playerMoveIndex}/${totalPlayerMoves} correct!`;
+                    showFeedback(`✓ ${progressMsg} Great move!`, 'success');
+                    
+                    updateProgressBar(currentMoveIndex, currentPuzzle.totalMoves);
+                    document.getElementById('progress').textContent = `${playerMoveIndex}/${totalPlayerMoves}`;
+                    document.getElementById('sidebarProgress').textContent = `${playerMoveIndex}/${totalPlayerMoves}`;
+                    
+                    if (result.complete) {
+                        stopTimer();
+                        incrementPuzzleCount();
+                        setTimeout(() => {
+                            showModal('🎉 Puzzle Solved!', 
+                                `Congratulations! You solved the puzzle in ${playerMoveIndex} moves!`);
+                        }, 1000);
+                    } else if (result.nextMove) {
+                        setTimeout(async () => {
+                            await makeOpponentMove();
+                            hideFeedback();
+                        }, 1200);
+                    }
+                } else {
+                    toSquare.classList.add('wrong-move');
+                    setTimeout(() => toSquare.classList.remove('wrong-move'), 500);
+                    
+                    showFeedback('✗ Wrong move! Try again.', 'error');
+                    setTimeout(hideFeedback, 2000);
+                }
+            } catch (error) {
+                showFeedback('Error verifying move. Please try again.', 'error');
+            }
+        }
+
+        function updateProgressBar(current, total) {
+            const percentage = (current / total) * 100;
+            document.getElementById('progressBar').style.width = percentage + '%';
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+            feedback.classList.remove('hidden');
+        }
+
+        function hideFeedback() {
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('hidden');
+        }
+
+        function showModal(title, message) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            if (shouldShowAd()) {
+                showAdModal();
+                setTimeout(() => {
+                    closeAdModal();
+                    loadNewPuzzle();
+                }, 100);
+            } else {
+                loadNewPuzzle();
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            timeLeft = 120;
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    stopTimer();
+                    showModal('⏰ Time\'s Up!', 'Better luck next time! Want to try another puzzle?');
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function showHint() {
+            if (currentPuzzle && currentMoveIndex < currentPuzzle.moves.length) {
+                const nextMove = currentPuzzle.moves[currentMoveIndex];
+                const from = nextMove.substring(0, 2);
+                showFeedback(`💡 Hint: Look at piece on square ${from.toUpperCase()}`, 'info');
+                setTimeout(hideFeedback, 3000);
+            }
+        }
+
+        function resetPuzzle() {
+            if (currentPuzzle) {
+                currentMoveIndex = 0;
+                playerMoveIndex = 0;
+                selectedSquare = null;
+                lastMoveSquares = [];
+                game.parseFEN(currentPuzzle.fen);
+                renderBoard();
+                hideFeedback();
+                startTimer();
+                
+                const totalPlayerMoves = Math.ceil(currentPuzzle.totalMoves / 2);
+                updateProgressBar(0, currentPuzzle.totalMoves);
+                document.getElementById('progress').textContent = `0/${totalPlayerMoves}`;
+                document.getElementById('sidebarProgress').textContent = `0/${totalPlayerMoves}`;
+                
+                setTimeout(() => makeOpponentMove(), 800);
+            }
+        }
+
+        init();
+
+    </script>
+
+
+</body>
