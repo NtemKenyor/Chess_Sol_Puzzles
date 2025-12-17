@@ -334,6 +334,7 @@
         </div>
     </div>
     <script type="text/javascript" src="https://pl22148621.effectivegatecpm.com/68/4a/2c/684a2c10b94efdb9b3e48639123b1358.js"></script>
+    
     <script>
         class ChessGame {
             constructor() { this.board = []; this.currentFEN = ''; this.isWhiteTurn = true; }
@@ -391,7 +392,7 @@
             window.location.hostname === '127.0.0.1';
 
         const BASE_URL = isLocalhost
-            ? 'http://localhost:3000'   // 👈 change to your local API port
+            ? 'http://localhost:3000/Chess_Sol_Puzzles'   // 👈 change to your local API port
             : 'https://roynek.com/Chess_Sol_Puzzles';
 
         function playSound(soundId) {
@@ -412,34 +413,85 @@
             return count > 0 && count % 2 === 0;
         }
 
+        let adCountdownInterval = null;
+
         function showAdModal() {
             const modal = document.getElementById('adModal');
             const skipBtn = document.getElementById('skipAd');
             const countdown = document.getElementById('skipCountdown');
             const adContent = document.getElementById('adContent');
+
+            if (!modal || !skipBtn || !countdown || !adContent) return;
+
             let seconds = 3;
 
             adContent.innerHTML = '<div id="socialbarContainer"></div>';
-            
             modal.classList.remove('hidden');
             skipBtn.disabled = true;
+            countdown.textContent = seconds;
 
-            const countdownInterval = setInterval(() => {
+            clearInterval(adCountdownInterval);
+
+            adCountdownInterval = setInterval(() => {
                 seconds--;
+
+                if (!countdown) return;
+
                 countdown.textContent = seconds;
+
                 if (seconds <= 0) {
-                    clearInterval(countdownInterval);
+                    clearInterval(adCountdownInterval);
                     skipBtn.disabled = false;
-                    document.getElementById('skipTimer').textContent = 'You can now skip';
+
+                    const timerText = document.getElementById('skipTimer');
+                    if (timerText) {
+                        timerText.textContent = 'You can now skip';
+                    }
                 }
             }, 1000);
         }
 
         function closeAdModal() {
-            document.getElementById('adModal').classList.add('hidden');
-            document.getElementById('skipTimer').textContent = 'Please wait 3 seconds...';
-            document.getElementById('skipCountdown').textContent = '3';
+            clearInterval(adCountdownInterval);
+
+            const modal = document.getElementById('adModal');
+            const timer = document.getElementById('skipTimer');
+            const countdown = document.getElementById('skipCountdown');
+
+            if (modal) modal.classList.add('hidden');
+            if (timer) timer.innerHTML = 'Please wait <span id="skipCountdown">3</span> seconds...';
         }
+
+
+
+        // function showAdModal() {
+        //     const modal = document.getElementById('adModal');
+        //     const skipBtn = document.getElementById('skipAd');
+        //     const countdown = document.getElementById('skipCountdown');
+        //     const adContent = document.getElementById('adContent');
+        //     let seconds = 3;
+
+        //     adContent.innerHTML = '<div id="socialbarContainer"></div>';
+            
+        //     modal.classList.remove('hidden');
+        //     skipBtn.disabled = true;
+
+        //     const countdownInterval = setInterval(() => {
+        //         seconds--;
+        //         countdown.textContent = seconds;
+        //         if (seconds <= 0) {
+        //             clearInterval(countdownInterval);
+        //             skipBtn.disabled = false;
+        //             document.getElementById('skipTimer').textContent = 'You can now skip';
+        //         }
+        //     }, 1000);
+        // }
+
+        // function closeAdModal() {
+        //     document.getElementById('adModal').classList.add('hidden');
+        //     document.getElementById('skipTimer').textContent = 'Please wait 3 seconds...';
+        //     document.getElementById('skipCountdown').textContent = '3';
+        // }
 
         function getPuzzleIdFromUrl() { return new URLSearchParams(window.location.search).get('puzzle'); }
         function updateUrlWithPuzzle(puzzleId) {
