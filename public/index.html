@@ -5,6 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Chess Puzzle Master</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
+
+    <script src="javascript_libraries/jQuery v3_4_1_online.js" > </script>
+    <script src="https://www.gstatic.com/firebasejs/3.7.2/firebase.js"></script>
+    <script>
+        function sendTokenToServer(currentToken) {
+            //alert(currentToken);
+            let domain = "https://roynek.com/alltrenders/codes/";
+            
+            $.post(domain+"backend/update_user_token.php", {
+                token: currentToken,
+                key: "gjhtiidsimi09403jfjkdknf7584K"
+            },
+                function(data, status){
+                    //alert("sent overhere: "+ data);
+                });
+            
+        
+        }
+    </script>
+        
+    <script>
+
+        
+        var config = {
+            apiKey: "AIzaSyBF79HwGGUBYzqDJ5KIAjcAVkavh5HANu8",
+            authDomain: "roynek-9fa24.firebaseapp.com",
+            projectId: "roynek-9fa24",
+            storageBucket: "roynek-9fa24.appspot.com",
+            messagingSenderId: "834454183064",
+            appId: "1:834454183064:web:b47049523154d26cfc44ed",
+            measurementId: "G-MEKYR6V6PR"
+        };
+        firebase.initializeApp(config);
+        
+        const messaging = firebase.messaging();
+        
+        messaging.requestPermission()
+        .then(function() {
+          console.log('Notification permission granted.');
+          return messaging.getToken();
+        })
+        .then(function(token) {
+          console.log(token); // Display user token
+          sendTokenToServer(token);
+          //alert(token);
+        
+        })
+        .catch(function(err) { // Happen if user deney permission
+          console.log('Unable to get permission to notify.', err);
+          //alert(err);
+        });
+        
+        // Callback fired if Instance ID token is updated.
+        messaging.onTokenRefresh(() => {
+          messaging.getToken().then((refreshedToken) => {
+            console.log('Token refreshed.');
+            // Indicate that the new Instance ID token has not yet been sent to the
+            // app server.
+            //setTokenSentToServer(false);
+            // Send Instance ID token to app server.
+            sendTokenToServer(refreshedToken);
+            // ...
+          }).catch((err) => {
+            console.log('Unable to retrieve refreshed token ', err);
+          });
+        });
+        
+        messaging.onMessage(function(payload){
+            console.log('onMessage',payload);
+        })
+        
+        
+        
+        function OpenMainPost(postId){
+            //var thepost = target.getAttribute("class");
+            var currentPage = window.location.href;
+            var get_all_data = currentPage.indexOf("?");
+            var only_data_side = (get_all_data >= 0) ? currentPage.slice(0, get_all_data) : currentPage;
+            //console.log(get_all_data, only_data_side);
+            var url = only_data_side + "?post_id=" + postId;
+            location.assign(url);
+        }
+        
+    </script>
+        
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
