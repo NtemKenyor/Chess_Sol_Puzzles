@@ -184,6 +184,7 @@ app.get(MAIN_DIR + '/api/puzzle/:id', async (req, res) => {
       fen: puzzle.fen,
       rating: puzzle.rating || 1500,
       themes: puzzle.themes || 'tactical',
+      moves,
       movesCount: moves.length
     });
 
