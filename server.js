@@ -51,6 +51,22 @@ const pool = mysql.createPool({
 });
 
 /* =========================
+   PUZZLE COUNT CACHE
+   ========================= */
+let PUZZLE_COUNT = null;
+
+async function getPuzzleCount() {
+  if (PUZZLE_COUNT === null) {
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) AS total FROM puzzles`
+    );
+    PUZZLE_COUNT = total;
+    console.log('Cached puzzle count:', PUZZLE_COUNT);
+  }
+  return PUZZLE_COUNT;
+}
+
+/* =========================
    ROUTES
    ========================= */
 app.get(MAIN_DIR + '/', (req, res) => {
@@ -58,23 +74,18 @@ app.get(MAIN_DIR + '/', (req, res) => {
 });
 
 /* =========================
-   GET RANDOM PUZZLE (FAST)
+   GET RANDOM PUZZLE (FIXED)
    ========================= */
 app.get(MAIN_DIR + '/api/puzzle/random', async (req, res) => {
   try {
-    // Step 1: get max id
-    const [[{ maxId }]] = await pool.query(
-      `SELECT MAX(id) AS maxId FROM puzzles`
-    );
+    const total = await getPuzzleCount();
 
-    if (!maxId) {
+    if (!total) {
       return res.status(500).json({ error: 'No puzzles available' });
     }
 
-    // Step 2: random id
-    const randomId = Math.floor(Math.random() * maxId) + 1;
+    const offset = Math.floor(Math.random() * total);
 
-    // Step 3: fetch nearest puzzle
     const [rows] = await pool.query(
       `
       SELECT
@@ -84,11 +95,9 @@ app.get(MAIN_DIR + '/api/puzzle/random', async (req, res) => {
         Rating AS rating,
         Themes AS themes
       FROM puzzles
-      WHERE id >= ?
-      ORDER BY id
-      LIMIT 1
+      LIMIT 1 OFFSET ?
       `,
-      [randomId]
+      [offset]
     );
 
     if (!rows.length) {
@@ -197,6 +206,8 @@ app.get(MAIN_DIR + '/api/puzzle/:id', async (req, res) => {
 /* =========================
    SERVER
    ========================= */
+
+   
 app.listen(PORT, () => {
   console.log(`🚀 Chess Puzzle server running on http://localhost:${PORT}`);
 });

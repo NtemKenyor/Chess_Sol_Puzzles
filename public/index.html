@@ -88,12 +88,28 @@
             background: var(--bg-card); border-radius: 1rem; padding: 1rem;
             display: flex; flex-direction: column; align-items: center;
         }
-        #chessboard {
+        /* #chessboard {
             width: min(calc(100vw - 2rem), 560px);
-            height: min(calc(100vw - 2rem), 560px);
-            border: 2px solid var(--border); border-radius: 0.5rem; overflow: hidden;
+            _height: min(calc(100vw - 2rem), 560px); 
+            border: 2px solid var(--border); 
+            border-radius: 0.5rem; 
+            overflow: auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: grid; grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+        } */
+
+        #chessboard {
+            width: min(calc(100vw - 2rem), 560px);
+            /* Automatically sets height equal to width : Aspect Ratio*/
+            /* aspect-ratio: 1 / 1;  */
+
+            border: 2px solid var(--border); 
+            border-radius: 0.5rem; 
+            overflow: hidden; /* Change auto to hidden since it's now a square */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr);
             grid-template-rows: repeat(8, 1fr);
         }
         .square {
@@ -397,6 +413,8 @@
             window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1';
 
+        const time2nextPuzzle = 5000; //3000;
+
         const BASE_URL = isLocalhost
             ? 'http://localhost:3000/Chess_Sol_Puzzles'   // 👈 change to your local API port
             : 'https://roynek.com/Chess_Sol_Puzzles';
@@ -409,6 +427,7 @@
         function getPuzzleCount() { return parseInt(localStorage.getItem('puzzleCount') || '0'); }
         function incrementPuzzleCount() {
             const count = getPuzzleCount() + 1;
+            conunt = (count > 2) ? 0 : count;
             localStorage.setItem('puzzleCount', count.toString());
             return count;
         }
@@ -416,6 +435,8 @@
         function shouldShowAd() {
             if (hasAdFreeAccess()) return false;
             const count = getPuzzleCount();
+            console.log("the count is: ", count);
+            // if (count > 2){incrementPuzzleCount(100);}
             return count > 0 && count % 2 === 0;
         }
 
@@ -508,17 +529,18 @@
         //     adsterraLoaded = true;
         // }
         
+        // This Ads would only show when a puzzle is successfully solved...
         let puzzlesSolvedSinceAd = 0;
         function loadPuzzleSolvedAd_adsterra() {
             const adWrapper = document.getElementById('puzzle-ad-wrapper');
             if (!adWrapper) return;
 
-            puzzlesSolvedSinceAd++;
+            // puzzlesSolvedSinceAd++;
 
-            // Show ad every 2 puzzles
-            if (puzzlesSolvedSinceAd < 2) return;
+            // // Show ad every 2 puzzles
+            // if (puzzlesSolvedSinceAd < 2) return;
 
-            puzzlesSolvedSinceAd = 0;
+            // puzzlesSolvedSinceAd = 0;
 
             adWrapper.style.display = 'block';
 
@@ -555,7 +577,7 @@
 
             if (!modal || !skipBtn || !countdown || !adContent) return;
 
-            let seconds = 3;
+            let seconds = 5;
 
             adContent.innerHTML = '<div id="socialbarContainer"></div>';
             // loadAdScript_adsterra();
@@ -594,7 +616,7 @@
             const countdown = document.getElementById('skipCountdown');
 
             if (modal) modal.classList.add('hidden');
-            if (timer) timer.innerHTML = 'Please wait <span id="skipCountdown">3</span> seconds...';
+            if (timer) timer.innerHTML = 'Please wait <span id="skipCountdown">5</span> seconds...';
         }
 
 
@@ -684,10 +706,14 @@
         }
 
         function handleNextPuzzle() {
+            incrementPuzzleCount();
+
             if (shouldShowAd()) {
                 showAdModal();
-                setTimeout(() => { closeAdModal(); loadNewPuzzle(); }, 3000);
+                setTimeout(() => { closeAdModal(); loadNewPuzzle(); }, time2nextPuzzle);
             } else loadNewPuzzle();
+
+
         }
 
         async function loadSpecificPuzzle(puzzleId) {
@@ -923,7 +949,7 @@
 
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
-            if (shouldShowAd()) { showAdModal(); setTimeout(() => { closeAdModal(); loadNewPuzzle(); }, 3000); }
+            if (shouldShowAd()) { showAdModal(); setTimeout(() => { closeAdModal(); loadNewPuzzle(); }, time2nextPuzzle); }
             else loadNewPuzzle();
         }
 
