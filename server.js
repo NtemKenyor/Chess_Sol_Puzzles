@@ -1,213 +1,144 @@
-// const express = require('express');
-// const fs = require('fs');
-// const path = require('path');
-// const app = express();
-// const PORT = 3000;
-
-// app.use(express.json());
-// app.use(express.static('.'));
-
-// // Parse CSV file with streaming to avoid memory issues
-// function parseCSV(filePath) {
-//   try {
-//     const content = fs.readFileSync(filePath, 'utf-8');
-//     const lines = content.split('\n');
-//     const puzzles = [];
-    
-//     // Skip header line
-//     for (let i = 1; i < lines.length && i < 1000; i++) { // Limit to first 1000 puzzles
-//       const line = lines[i].trim();
-//       if (!line) continue;
-      
-//       // Split by comma, but handle commas in URLs
-//       const match = line.match(/^(\d+),([^,]+),([^,]+),([^,]+),(\d+),(\d+),(\d+),(\d+),([^,]*),([^,]*),?(.*)$/);
-      
-//       if (match) {
-//         puzzles.push({
-//           id: match[2],
-//           fen: match[3],
-//           moves: match[4].trim().split(' '),
-//           rating: parseInt(match[5]) || 0,
-//           popularity: parseInt(match[7]) || 0,
-//           themes: match[9] || '',
-//           gameUrl: match[10] || ''
-//         });
-//       }
-//     }
-    
-//     return puzzles;
-//   } catch (error) {
-//     console.error('CSV parsing error:', error.message);
-//     return [];
-//   }
-// }
-
-// // Load puzzles
-// let puzzles = [];
-// try {
-//   puzzles = parseCSV('puzzles_part_1.csv');
-//   console.log(`✓ Loaded ${puzzles.length} puzzles successfully`);
-// } catch (error) {
-//   console.error('Error loading puzzles:', error.message);
-// }
-
-// // API endpoint to get a random puzzle
-// app.get('/api/puzzle/random', (req, res) => {
-//   if (puzzles.length === 0) {
-//     return res.status(500).json({ error: 'No puzzles available' });
-//   }
-  
-//   const randomIndex = Math.floor(Math.random() * puzzles.length);
-//   const puzzle = puzzles[randomIndex];
-  
-//   res.json({
-//     id: puzzle.id,
-//     fen: puzzle.fen,
-//     rating: puzzle.rating,
-//     themes: puzzle.themes,
-//     moves: puzzle.moves, // Send all moves
-//     movesCount: puzzle.moves.length
-//   });
-// });
-
-// // API endpoint to verify a move
-// app.post('/api/puzzle/verify', (req, res) => {
-//   const { puzzleId, moveIndex, move } = req.body;
-  
-//   const puzzle = puzzles.find(p => p.id === puzzleId);
-  
-//   if (!puzzle) {
-//     return res.status(404).json({ error: 'Puzzle not found' });
-//   }
-  
-//   const expectedMove = puzzle.moves[moveIndex];
-//   const isCorrect = move === expectedMove;
-//   const isComplete = moveIndex === puzzle.moves.length - 1;
-  
-//   res.json({
-//     correct: isCorrect,
-//     complete: isComplete && isCorrect,
-//     expectedMove: expectedMove,
-//     nextMove: isCorrect && !isComplete ? puzzle.moves[moveIndex + 1] : null,
-//     totalMoves: puzzle.moves.length,
-//     currentMove: moveIndex + 1
-//   });
-// });
-
-// app.listen(PORT, () => {
-//   console.log(`✓ Chess Puzzle server running on http://localhost:${PORT}`);
-//   if (puzzles.length === 0) {
-//     console.log('⚠ WARNING: No puzzles loaded. Check puzzles_part_1.csv file.');
-//   }
-// });
-
+require('dotenv').config();
 
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
+const mysql = require('mysql2/promise');
+
 const app = express();
 const PORT = 3000;
 const MAIN_DIR = '/chess_sol_puzzles';
 
+/* =========================
+   CORS CONFIGURATION
+   ========================= */
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
 
+    if (
+      origin === 'https://roynek.com' ||
+      origin.endsWith('.roynek.com')
+    ) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+/* =========================
+   MIDDLEWARES
+   ========================= */
 app.use(express.json());
 app.use(express.static('public'));
 
-// Parse CSV file with better memory handling
-function parseCSV(filePath) {
-    console.log('Parsing CSV file:', filePath);
+/* =========================
+   MYSQL CONNECTION POOL
+   ========================= */
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,   // increase later if needed
+  queueLimit: 0
+});
+
+/* =========================
+   ROUTES
+   ========================= */
+app.get(MAIN_DIR + '/', (req, res) => {
+  res.send('Entrance Point - Hello world');
+});
+
+/* =========================
+   GET RANDOM PUZZLE
+   ========================= */
+app.get(MAIN_DIR + '/api/puzzle/random', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        PuzzleId AS id,
+        FEN AS fen,
+        Moves AS moves,
+        Rating AS rating,
+        Themes AS themes
+      FROM puzzles
+      ORDER BY RAND()
+      LIMIT 1
+    `);
+
+    if (!rows.length) {
+      return res.status(500).json({ error: 'No puzzles available' });
+    }
+
+    const puzzle = rows[0];
+    const moveList = puzzle.moves.trim().split(' ').filter(Boolean);
+
+    res.json({
+      id: puzzle.id,
+      fen: puzzle.fen,
+      rating: puzzle.rating || 1500,
+      themes: puzzle.themes || 'tactical',
+      moves: moveList,
+      totalMoves: moveList.length
+    });
+
+  } catch (err) {
+    console.error('DB Error (random puzzle):', err.message);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/* =========================
+   VERIFY MOVE
+   ========================= */
+app.post(MAIN_DIR + '/api/puzzle/verify', async (req, res) => {
+  const { puzzleId, moveIndex, move } = req.body;
 
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n');
-    const puzzles = [];
-    
-    // Skip header line
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      // Split by comma, but be careful with commas in URLs
-      const match = line.match(/^(\d+),([^,]+),([^,]+),([^,]+),(\d+),(\d+),(\d+),(\d+),([^,]*),([^,]*),?(.*)$/);
-      
-      if (match) {
-        puzzles.push({
-          id: match[2],
-          fen: match[3],
-          moves: match[4].trim().split(' ').filter(m => m.length > 0),
-          rating: parseInt(match[5]) || 1500,
-          popularity: parseInt(match[7]) || 0,
-          themes: match[9] || 'tactical',
-          gameUrl: match[10] || ''
-        });
-      }
+    const [rows] = await pool.query(`
+      SELECT Moves
+      FROM puzzles
+      WHERE PuzzleId = ?
+      LIMIT 1
+    `, [puzzleId]);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Puzzle not found' });
     }
-    
-    return puzzles;
-  } catch (error) {
-    console.error('CSV Parse Error:', error.message);
-    return [];
+
+    const moves = rows[0].Moves.trim().split(' ').filter(Boolean);
+    const expectedMove = moves[moveIndex];
+    const isCorrect = move === expectedMove;
+    const isComplete = moveIndex >= moves.length - 1;
+
+    res.json({
+      correct: isCorrect,
+      complete: isComplete && isCorrect,
+      expectedMove,
+      nextMove:
+        isCorrect && moveIndex + 1 < moves.length
+          ? moves[moveIndex + 1]
+          : null,
+      moveNumber: moveIndex + 1,
+      totalMoves: moves.length
+    });
+
+  } catch (err) {
+    console.error('DB Error (verify move):', err.message);
+    res.status(500).json({ error: 'Database error' });
   }
-}
-
-// Load puzzles
-let puzzles = [];
-const csvPath = path.join(__dirname, 'puzzles_part_1.csv');
-
-if (fs.existsSync(csvPath)) {
-  puzzles = parseCSV(csvPath);
-  console.log(`✓ Loaded ${puzzles.length} puzzles successfully`);
-} else {
-  console.error('✗ puzzles_part_1.csv not found in:', __dirname);
-}
-
-app.get(MAIN_DIR+'/', (req, res) => {
-  res.send('Entrace Point - Hello world');
 });
 
-// API endpoint to get a random puzzle
-app.get(MAIN_DIR+'/api/puzzle/random', (req, res) => {
-  if (puzzles.length === 0) {
-    return res.status(500).json({ error: 'No puzzles available' });
-  }
-  
-  const randomIndex = Math.floor(Math.random() * puzzles.length);
-  const puzzle = puzzles[randomIndex];
-  
-  res.json({
-    id: puzzle.id,
-    fen: puzzle.fen,
-    rating: puzzle.rating,
-    themes: puzzle.themes,
-    moves: puzzle.moves,
-    totalMoves: puzzle.moves.length
-  });
-});
-
-// API endpoint to verify a move
-app.post(MAIN_DIR+'/api/puzzle/verify', (req, res) => {
-  const { puzzleId, moveIndex, move } = req.body;
-  
-  const puzzle = puzzles.find(p => p.id === puzzleId);
-  
-  if (!puzzle) {
-    return res.status(404).json({ error: 'Puzzle not found' });
-  }
-  
-  const expectedMove = puzzle.moves[moveIndex];
-  const isCorrect = move === expectedMove;
-  const isComplete = moveIndex >= puzzle.moves.length - 1;
-  
-  res.json({
-    correct: isCorrect,
-    complete: isComplete && isCorrect,
-    expectedMove: expectedMove,
-    nextMove: isCorrect && moveIndex + 1 < puzzle.moves.length ? puzzle.moves[moveIndex + 1] : null,
-    moveNumber: moveIndex + 1,
-    totalMoves: puzzle.moves.length
-  });
-});
-
+/* =========================
+   SERVER
+   ========================= */
 app.listen(PORT, () => {
-  console.log(`\n🚀 Chess Puzzle server running on http://localhost:${PORT}\n`);
+  console.log(`🚀 Chess Puzzle server running on http://localhost:${PORT}`);
 });

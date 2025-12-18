@@ -413,6 +413,18 @@
             return count > 0 && count % 2 === 0;
         }
 
+
+        function loadAdScript() {
+            if (document.getElementById('adScript')) return;
+
+            const script = document.createElement('script');
+            script.id = 'adScript';
+            script.src = 'https://pl22148621.effectivegatecpm.com/68/4a/2c/684a2c10b94efdb9b3e48639123b1358.js';
+            script.async = true;
+
+            document.getElementById('adContent').appendChild(script);
+        }
+
         let adCountdownInterval = null;
 
         function showAdModal() {
@@ -426,6 +438,7 @@
             let seconds = 3;
 
             adContent.innerHTML = '<div id="socialbarContainer"></div>';
+            loadAdScript();
             modal.classList.remove('hidden');
             skipBtn.disabled = true;
             countdown.textContent = seconds;
