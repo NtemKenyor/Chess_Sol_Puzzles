@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const express = require('express');
-const path = require('path');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 
@@ -18,7 +17,9 @@ app.use(cors({
 
     if (
       origin === 'https://roynek.com' ||
-      origin.endsWith('.roynek.com')
+      origin.endsWith('.roynek.com') ||
+      origin === 'http://localhost:3000' ||
+      origin === 'http://localhost'
     ) {
       return callback(null, true);
     }
@@ -45,7 +46,7 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10,   // increase later if needed
+  connectionLimit: 10,
   queueLimit: 0
 });
 
@@ -57,11 +58,25 @@ app.get(MAIN_DIR + '/', (req, res) => {
 });
 
 /* =========================
-   GET RANDOM PUZZLE
+   GET RANDOM PUZZLE (FAST)
    ========================= */
 app.get(MAIN_DIR + '/api/puzzle/random', async (req, res) => {
   try {
-    const [rows] = await pool.query(`
+    // Step 1: get max id
+    const [[{ maxId }]] = await pool.query(
+      `SELECT MAX(id) AS maxId FROM puzzles`
+    );
+
+    if (!maxId) {
+      return res.status(500).json({ error: 'No puzzles available' });
+    }
+
+    // Step 2: random id
+    const randomId = Math.floor(Math.random() * maxId) + 1;
+
+    // Step 3: fetch nearest puzzle
+    const [rows] = await pool.query(
+      `
       SELECT
         PuzzleId AS id,
         FEN AS fen,
@@ -69,24 +84,27 @@ app.get(MAIN_DIR + '/api/puzzle/random', async (req, res) => {
         Rating AS rating,
         Themes AS themes
       FROM puzzles
-      ORDER BY RAND()
+      WHERE id >= ?
+      ORDER BY id
       LIMIT 1
-    `);
+      `,
+      [randomId]
+    );
 
     if (!rows.length) {
       return res.status(500).json({ error: 'No puzzles available' });
     }
 
     const puzzle = rows[0];
-    const moveList = puzzle.moves.trim().split(' ').filter(Boolean);
+    const moves = puzzle.moves.trim().split(' ').filter(Boolean);
 
     res.json({
       id: puzzle.id,
       fen: puzzle.fen,
       rating: puzzle.rating || 1500,
       themes: puzzle.themes || 'tactical',
-      moves: moveList,
-      totalMoves: moveList.length
+      moves,
+      totalMoves: moves.length
     });
 
   } catch (err) {
@@ -102,12 +120,10 @@ app.post(MAIN_DIR + '/api/puzzle/verify', async (req, res) => {
   const { puzzleId, moveIndex, move } = req.body;
 
   try {
-    const [rows] = await pool.query(`
-      SELECT Moves
-      FROM puzzles
-      WHERE PuzzleId = ?
-      LIMIT 1
-    `, [puzzleId]);
+    const [rows] = await pool.query(
+      `SELECT Moves FROM puzzles WHERE PuzzleId = ? LIMIT 1`,
+      [puzzleId]
+    );
 
     if (!rows.length) {
       return res.status(404).json({ error: 'Puzzle not found' });
@@ -132,6 +148,47 @@ app.post(MAIN_DIR + '/api/puzzle/verify', async (req, res) => {
 
   } catch (err) {
     console.error('DB Error (verify move):', err.message);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/* =========================
+   GET PUZZLE BY ID
+   ========================= */
+app.get(MAIN_DIR + '/api/puzzle/:id', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `
+      SELECT
+        PuzzleId AS id,
+        FEN AS fen,
+        Moves AS moves,
+        Rating AS rating,
+        Themes AS themes
+      FROM puzzles
+      WHERE PuzzleId = ?
+      LIMIT 1
+      `,
+      [req.params.id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Puzzle not found' });
+    }
+
+    const puzzle = rows[0];
+    const moves = puzzle.moves.trim().split(' ').filter(Boolean);
+
+    res.json({
+      id: puzzle.id,
+      fen: puzzle.fen,
+      rating: puzzle.rating || 1500,
+      themes: puzzle.themes || 'tactical',
+      movesCount: moves.length
+    });
+
+  } catch (err) {
+    console.error('DB Error (get puzzle by id):', err.message);
     res.status(500).json({ error: 'Database error' });
   }
 });

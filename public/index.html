@@ -333,7 +333,7 @@
             <button id="skipAd" class="btn btn-primary" style="width: 100%;" disabled>Skip Ad</button>
         </div>
     </div>
-    <script type="text/javascript" src="https://pl22148621.effectivegatecpm.com/68/4a/2c/684a2c10b94efdb9b3e48639123b1358.js"></script>
+    <!-- <script type="text/javascript" src="https://pl22148621.effectivegatecpm.com/68/4a/2c/684a2c10b94efdb9b3e48639123b1358.js"></script> -->
     
     <script>
         class ChessGame {
@@ -414,7 +414,7 @@
         }
 
 
-        function loadAdScript() {
+        function loadAdScript_adsterra() {
             if (document.getElementById('adScript')) return;
 
             const script = document.createElement('script');
@@ -424,6 +424,31 @@
 
             document.getElementById('adContent').appendChild(script);
         }
+
+
+        function loadNativeAd_adsterra() {
+            const adContent = document.getElementById('adContent');
+            if (!adContent) return;
+
+            // Prevent loading twice
+            if (document.getElementById('adsterra-native-script')) return;
+
+            // Create container
+            const container = document.createElement('div');
+            container.id = 'container-42aaec9dd1de27b297373dbccfd79422';
+            adContent.appendChild(container);
+
+            // Create script
+            const script = document.createElement('script');
+            script.id = 'adsterra-native-script';
+            script.async = true;
+            script.setAttribute('data-cfasync', 'false');
+            script.src =
+                'https://pl22148429.effectivegatecpm.com/42aaec9dd1de27b297373dbccfd79422/invoke.js';
+
+            adContent.appendChild(script);
+        }
+
 
         let adCountdownInterval = null;
 
@@ -438,7 +463,9 @@
             let seconds = 3;
 
             adContent.innerHTML = '<div id="socialbarContainer"></div>';
-            loadAdScript();
+            // loadAdScript_adsterra();
+            loadNativeAd_adsterra();
+
             modal.classList.remove('hidden');
             skipBtn.disabled = true;
             countdown.textContent = seconds;
