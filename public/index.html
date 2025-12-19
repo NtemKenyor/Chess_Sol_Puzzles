@@ -6,10 +6,64 @@
     <title>Chess Puzzle Master</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
 
-    <script src="https://roynek.com/alltrenders/codes/javascript_libraries/jQuery v3_4_1_online.js" > </script>
+    <script src="js/jQuery-v3_4_1_online.js" > </script>
 
 
-    <script src="https://www.gstatic.com/firebasejs/3.7.2/firebase.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+      
+        const firebaseConfig = {
+          apiKey: "AIzaSyBF79HwGGUBYzqDJ5KIAjcAVkavh5HANu8",
+          authDomain: "roynek-9fa24.firebaseapp.com",
+          projectId: "roynek-9fa24",
+          messagingSenderId: "834454183064",
+          appId: "1:834454183064:web:b47049523154d26cfc44ed"
+        };
+      
+        // 1️⃣ Init Firebase
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+      
+        // 2️⃣ Register Service Worker
+        if ('serviceWorker' in navigator) {
+          await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        }
+      
+        // 3️⃣ Ask permission + get token
+        async function initPush() {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') return;
+      
+          const token = await getToken(messaging, {
+            vapidKey: "BFRRcDPbYEr2HORtn49Gz_K6WNKBFoRyOkLh_DD2XwhzdIGzV3e6b3yjN5dgQ9fIuZ3JWvmP0pDsAduH9T0mamw"
+          });
+      
+          if (token) {
+            console.log("FCM Token:", token);
+      
+            // send token to backend
+            fetch("/alltrenders/codes/backend/update_user_token.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                token,
+                key: "gjhtiidsimi09403jfjkdknf7584K"
+              })
+            });
+          }
+        }
+      
+        // 4️⃣ Listen for messages while page is open
+        onMessage(messaging, payload => {
+          console.log("Foreground notification:", payload);
+        });
+      
+        initPush();
+      </script>
+
+
+    <!-- <script src="https://www.gstatic.com/firebasejs/3.7.2/firebase.js"></script>
     <script>
         function sendTokenToServer(currentToken) {
             //alert(currentToken);
@@ -24,10 +78,6 @@
             
         
         }        
- 
-
-        
-
 
         function firebase_powerhouse(){
 
@@ -86,7 +136,7 @@
             firebase_powerhouse();
         });
         
-    </script>
+    </script> -->
 
     <!-- <script src="https://www.gstatic.com/firebasejs/3.7.2/firebase.js"></script>
     <script>
@@ -700,12 +750,12 @@
             const adWrapper = document.getElementById('puzzle-ad-wrapper');
             if (!adWrapper) return;
 
-            // puzzlesSolvedSinceAd++;
+            puzzlesSolvedSinceAd++;
 
-            // // Show ad every 2 puzzles
-            // if (puzzlesSolvedSinceAd < 2) return;
+            // Show ad every 2 puzzles
+            if (puzzlesSolvedSinceAd < 2) return;
 
-            // puzzlesSolvedSinceAd = 0;
+            puzzlesSolvedSinceAd = 0;
 
             adWrapper.style.display = 'block';
 
