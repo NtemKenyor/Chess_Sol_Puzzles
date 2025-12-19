@@ -43,7 +43,7 @@
             console.log("FCM Token:", token);
       
             // send token to backend
-            fetch("/alltrenders/codes/backend/update_user_token.php", {
+            fetch("https://roynek.com/alltrenders/codes/backend/update_user_token.php", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
