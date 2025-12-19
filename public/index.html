@@ -9,6 +9,31 @@
     <script src="js/jQuery-v3_4_1_online.js" > </script>
 
 
+    <script>
+        function sendTokenToServer(currentToken) {
+            const domain = "https://roynek.com/alltrenders/codes/";
+            const url = domain + "backend/update_user_token.php";
+        
+            // Create form data (mimics HTML form submit)
+            const formData = new FormData();
+            formData.append("token", currentToken);
+            formData.append("key", "gjhtiidsimi09403jfjkdknf7584K");
+        
+            // Send POST request
+            fetch(url, {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                // optional: console.log("Server response:", data);
+            })
+            .catch(err => {
+                console.error("Token send failed:", err);
+            });
+        }
+    </script>
+        
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
@@ -41,16 +66,16 @@
       
           if (token) {
             console.log("FCM Token:", token);
-      
+            sendTokenToServer(token);
             // send token to backend
-            fetch("https://roynek.com/alltrenders/codes/backend/update_user_token.php", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                token,
-                key: "gjhtiidsimi09403jfjkdknf7584K"
-              })
-            });
+            // fetch("https://roynek.com/alltrenders/codes/backend/update_user_token.php", {
+            //   method: "POST",
+            //   headers: { "Content-Type": "application/json" },
+            //   body: JSON.stringify({
+            //     token,
+            //     key: "gjhtiidsimi09403jfjkdknf7584K"
+            //   })
+            // });
           }
         }
       
@@ -570,6 +595,49 @@
             <button id="skipAd" class="btn btn-primary" style="width: 100%;" disabled>Skip Ad</button>
         </div>
     </div>
+
+
+    <div id="pushPrompt" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #111;
+        color: #fff;
+        padding: 16px 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.4);
+        max-width: 320px;
+        display: none;
+        z-index: 9999;
+        font-family: system-ui;
+    ">
+    <strong style="font-size:16px;">♟️ Stay sharp with ChessSol</strong>
+    <p style="font-size:14px; margin:8px 0;">
+        Would you love to stay connected with puzzles inspired by Grandmasters?
+    </p>
+    <div style="display:flex; gap:10px;">
+        <button id="enablePush" style="
+            flex:1;
+            background:#4CAF50;
+            color:#fff;
+            border:none;
+            padding:8px;
+            border-radius:8px;
+            cursor:pointer;
+        ">
+        Yes, notify me
+        </button>
+        <button id="dismissPush" style="
+            background:none;
+            border:none;
+            color:#aaa;
+            cursor:pointer;
+        ">
+        Later
+        </button>
+    </div>
+    </div>
+
     <!-- <script type="text/javascript" src="https://pl22148621.effectivegatecpm.com/68/4a/2c/684a2c10b94efdb9b3e48639123b1358.js"></script> -->
     
     <script>
@@ -1200,5 +1268,29 @@
         }
         init();
     </script>
+
+   
+    <script>
+        (function () {
+            // Don't show if already granted or denied
+            if (Notification.permission !== 'default') return;
+        
+            // Small delay so it doesn't feel aggressive
+            setTimeout(() => {
+                document.getElementById('pushPrompt').style.display = 'block';
+            }, 3000);
+        
+            document.getElementById('dismissPush').onclick = () => {
+                document.getElementById('pushPrompt').style.display = 'none';
+            };
+        
+            document.getElementById('enablePush').onclick = async () => {
+                document.getElementById('pushPrompt').style.display = 'none';
+                await initPush(); // 🔥 calls your existing function
+            };
+        })();
+    </script>
+    
+
 </body>
 </html>
