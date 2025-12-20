@@ -829,9 +829,19 @@
 
             adWrapper.style.display = 'block';
 
-            const container = document.getElementById(
-                'container-42aaec9dd1de27b297373dbccfd79422'
-            );
+            // const container = document.getElementById(
+            //     'container-42aaec9dd1de27b297373dbccfd79422'
+            // );
+
+            // Create container
+            if(document.getElementById('container-42aaec9dd1de27b297373dbccfd79422')){
+                const adContainer = document.getElementById('container-42aaec9dd1de27b297373dbccfd79422');
+                adWrapper.appendChild(adContainer); // moves it in the DOM, keeps ID same
+            }else{
+                const container = document.createElement('div');
+                container.id = 'container-42aaec9dd1de27b297373dbccfd79422';
+                adWrapper.appendChild(container);
+            }
 
             // Clear old ad
             // container.innerHTML = '';
