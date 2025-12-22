@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master the Knight | Roynek Chess</title>
+    
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '959093550614028');
+    fbq('track', 'PageView');
+    fbq('track', 'ViewContent', { content_name: '5000 Knight Puzzles Pack', value: 10.00, currency: 'USD' });
+    </script>
+
+    <style>
+        :root {
+            --primary: #00c853; /* Success Green */
+            --accent: #f39c12;  /* Knight Gold */
+            --bg: #0d1117;      /* GitHub Dark */
+            --card: #161b22;
+            --text: #e6edf3;
+        }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: var(--bg); color: var(--text); margin: 0; line-height: 1.6;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 60px 20px;
+            background: radial-gradient(circle at top, #1e293b 0%, #0d1117 100%);
+            border-bottom: 1px solid #30363d;
+        }
+
+        .badge {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--accent);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h1 { font-size: 3rem; margin: 20px 0; letter-spacing: -1px; }
+        .highlight { color: var(--accent); }
+
+        /* Puzzle Container */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            max-width: 1100px;
+            margin: -40px auto 40px;
+            padding: 0 20px;
+        }
+
+        .puzzle-card {
+            background: var(--card);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .board-mockup {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #2b2b2b;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fen-display {
+            font-family: monospace;
+            background: #000;
+            padding: 10px;
+            font-size: 0.75rem;
+            width: 90%;
+            margin-top: 15px;
+            border-radius: 4px;
+            color: #8b949e;
+        }
+
+        /* Sidebar CTA */
+        .cta-card {
+            background: var(--card);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 30px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .price-tag { font-size: 2.5rem; font-weight: 800; display: block; }
+        .original-price { text-decoration: line-through; color: #8b949e; font-size: 1.2rem; }
+
+        .btn-primary {
+            display: block;
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+        .trust-icons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 850px) {
+            .main-layout { grid-template-columns: 1fr; margin-top: 20px; }
+            h1 { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div style="max-width: 800px; margin: auto; text-align: center;">
+            <span class="badge">Masterclass Series</span>
+            <h1>The <span class="highlight">Knight</span> Tactics Vault</h1>
+            <p style="font-size: 1.25rem; color: #8b949e;">Don't just play. Dominate. 5,000 curated puzzles designed to make your Knight vision unstoppable.</p>
+        </div>
+    </section>
+
+    <main class="main-layout">
+        <div class="puzzle-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Daily Challenge</h3>
+                <span style="color: var(--accent);">White to move</span>
+            </div>
+            
+            <div class="board-mockup">
+                <div style="text-align: center; padding: 20px;">
+                    <p style="font-size: 1.1rem; color: #fff;">[ Interactive Chessboard Here ]</p>
+                    <p style="font-size: 0.9rem; color: #8b949e;">Solving for FEN: 4r3/5pk1/1p3np1/3p3p/2qQ4/P4N1P/1P3RP1/7K w - - 6 34</p>
+                </div>
+            </div>
+            
+            <div class="fen-display">
+                FEN: 4r3/5pk1/1p3np1/3p3p/2qQ4/P4N1P/1P3RP1/7K w - - 6 34
+            </div>
+        </div>
+
+        <div class="cta-card">
+            <span class="original-price">$49.00</span>
+            <span class="price-tag">$10.00</span>
+            <p style="margin: 10px 0; color: #8b949e;">Get lifetime access to the full database.</p>
+            
+            <ul style="padding-left: 20px; font-size: 0.9rem; color: #c9d1d9;">
+                <li>5,000+ Knight-specific forks & sacrifices</li>
+                <li>Zero distracting advertisements</li>
+                <li>Mobile-friendly training interface</li>
+                <li>Instant access after checkout</li>
+            </ul>
+
+            <a href="payment.html" class="btn-primary" onclick="trackCheckout()">UNLOCK ALL PUZZLES</a>
+            
+            <div class="trust-icons">
+                <span>🔒 Secure Checkout</span>
+                <span>⚡ Instant Delivery</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function trackCheckout() {
+            fbq('track', 'InitiateCheckout', {
+                content_name: '5000 Knight Puzzles Pack',
+                value: 10.00,
+                currency: 'USD'
+            });
+        }
+    </script>
+
+</body>
+</html>

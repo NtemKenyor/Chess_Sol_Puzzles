@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Vault | Roynek Chess</title>
+    
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '959093550614028');
+    fbq('track', 'PageView');
+
+    // THE CONVERSION EVENT
+    fbq('track', 'Purchase', {
+        value: 10.00,
+        currency: 'USD',
+        content_name: '5000 Knight Puzzles Pack'
+    });
+    </script>
+
+    <style>
+        :root { --primary: #00c853; --bg: #0d1117; --card: #161b22; --text: #e6edf3; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); text-align: center; padding: 100px 20px; }
+        .success-card { max-width: 500px; margin: auto; }
+        .icon { font-size: 50px; color: var(--primary); margin-bottom: 20px; }
+        h1 { margin-bottom: 10px; }
+        p { color: #8b949e; margin-bottom: 30px; }
+        .btn-access { background: var(--primary); color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="success-card">
+        <div class="icon">Checkmate! ✅</div>
+        <h1>Access Granted.</h1>
+        <p>Thank you for your purchase. You now have lifetime access to the 5,000 Knight Tactics Vault.</p>
+        
+        <a href="index.html" class="btn-access">START TRAINING NOW</a>
+    </div>
+
+</body>
+</html>

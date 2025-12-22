@@ -699,6 +699,7 @@
             window.location.hostname === '127.0.0.1';
 
         const time2nextPuzzle = 7000; // 5000; //3000;
+        const d_showAdsModal_seconds = 7; //the display time on screen during ads - similar to the one above...
 
         const BASE_URL = isLocalhost
             ? 'http://localhost:3000/Chess_Sol_Puzzles'   // 👈 change to your local API port
@@ -872,7 +873,7 @@
 
             if (!modal || !skipBtn || !countdown || !adContent) return;
 
-            let seconds = 7;
+            let seconds = d_showAdsModal_seconds;
 
             // adContent.innerHTML = '<div id="socialbarContainer"></div>';
             // loadAdScript_adsterra();

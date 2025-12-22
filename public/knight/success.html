@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Vault | Roynek Chess</title>
+    
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '959093550614028');
+    fbq('track', 'PageView');
+    fbq('track', 'Purchase', {
+        value: 10.00,
+        currency: 'USD',
+        content_name: '5000 Knight Puzzles Pack'
+    });
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #00d084;
+            --accent: #ffa726;
+            --bg-dark: #0a0e14;
+            --bg-card: #151922;
+            --text: #e8edf4;
+            --text-dim: #8b95a5;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated Background */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 208, 132, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 167, 38, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        /* Confetti Animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            animation: confetti-fall 3s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Success Card */
+        .success-container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--bg-card);
+            border: 2px solid var(--primary);
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0, 208, 132, 0.3);
+            position: relative;
+            z-index: 10;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Success Icon */
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, var(--primary), #00b872);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            animation: scaleIn 0.5s ease-out 0.3s both;
+            box-shadow: 0 20px 60px rgba(0, 208, 132, 0.4);
+            position: relative;
+        }
+
+        .success-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #00b872);
+            animation: pulse-ring 1.5s ease-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ffffff, var(--text-dim));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeIn 0.6s ease-out 0.5s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .success-message {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+            line-height: 1.6;
+            animation: fadeIn 0.6s ease-out 0.7s both;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Benefits Grid */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.6s ease-out 0.9s both;
+        }
+
+        .benefit-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .benefit-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .benefit-text {
+            font-size: 0.95rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), #00b872);
+            color: white;
+            text-align: center;
+            padding: 20px 50px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 208, 132, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out 1.1s both;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 208, 132, 0.4);
+        }
+
+        /* Email Notice */
+        .email-notice {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 167, 38, 0.1);
+            border: 1px solid rgba(255, 167, 38, 0.3);
+            border-radius: 12px;
+            animation: fadeIn 0.6s ease-out 1.3s both;
+        }
+
+        .email-notice p {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .email-notice strong {
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .success-container {
+                padding: 40px 30px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .success-message {
+                font-size: 1.1rem;
+            }
+            
+            .benefits-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .cta-button {
+                width: 100%;
+                padding: 18px 30px;
+            }
+        }
+
+
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .popup-box {
+            background: #111;
+            color: #fff;
+            padding: 25px;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 150, 0.3);
+        }
+
+        .popup-box h2 {
+            margin-bottom: 10px;
+            color: #00ff99;
+        }
+
+        .popup-box button {
+            margin-top: 20px;
+            padding: 10px 18px;
+            border: none;
+            background: #00ff99;
+            color: #000;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        
+        <h1>Payment Successful!</h1>
+        
+        <p class="success-message">
+            Welcome to the elite club! You now have <span class="highlight">lifetime access</span> to all 5,000 knight tactics puzzles.
+        </p>
+
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">♞</div>
+                <div class="benefit-text">5,000+ Puzzles</div>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">⚡</div>
+                <div class="benefit-text">Instant Access</div>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">📱</div>
+                <div class="benefit-text">Mobile Ready</div>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">∞</div>
+                <div class="benefit-text">Lifetime Updates</div>
+            </div>
+        </div>
+
+        <!-- <a href="index.html" class="cta-button">
+            🚀 START TRAINING NOW
+        </a> -->
+        <a href="javascript:void(0)" class="cta-button" onclick="showConfirmationPopup()">
+            🚀 START TRAINING NOW
+        </a>
+        
+        <div id="confirmationPopup" class="popup-overlay">
+            <div class="popup-box">
+                <h2>✅ Payment Received</h2>
+                <p>
+                    Your purchase is being confirmed.<br><br>
+                    📩 You will receive an email within <strong>24 hours</strong> containing
+                    your <strong>full login details and credentials</strong>.
+                </p>
+                <button onclick="closeConfirmationPopup()">Got it</button>
+            </div>
+        </div>
+        
+
+        <div class="email-notice">
+            <p><strong>📧 Check your email</strong> for your login credentials and access instructions.</p>
+        </div>
+    </div>
+
+    <script>
+        // Create confetti animation
+        function createConfetti() {
+            const colors = ['#00d084', '#ffa726', '#ffffff', '#00b872'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Trigger confetti on load
+        window.addEventListener('load', createConfetti);
+    </script>
+
+    <script>
+        function showConfirmationPopup() {
+            document.getElementById("confirmationPopup").style.display = "flex";
+        }
+        
+        function closeConfirmationPopup() {
+            document.getElementById("confirmationPopup").style.display = "none";
+        }
+    </script>
+
+
+</body>
+</html>
