@@ -86,10 +86,16 @@ draw_filters = (
     f"drawtext=text='%{{eif\\:{COUNTDOWN_SEC}-(t-1)\\:d}}':fontcolor=white:fontsize=120:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,1,{1+COUNTDOWN_SEC})'"
 )
 
+# cmd = (
+#     f"ffmpeg -y -framerate {FPS} -i {TEMP_DIR}/frame_%04d.png "
+#     f"-vf \"{draw_filters}\" -c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}"
+# )
+# Change this line in your script:
 cmd = (
-    f"ffmpeg -y -framerate {FPS} -i {TEMP_DIR}/frame_%04d.png "
+    f"./ffmpeg -y -framerate {FPS} -i {TEMP_DIR}/frame_%04d.png "
     f"-vf \"{draw_filters}\" -c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}"
 )
+
 
 print("Encoding video...")
 subprocess.run(cmd, shell=True)
