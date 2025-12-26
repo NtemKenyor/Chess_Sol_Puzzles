@@ -90,11 +90,19 @@ draw_filters = (
 #     f"ffmpeg -y -framerate {FPS} -i {TEMP_DIR}/frame_%04d.png "
 #     f"-vf \"{draw_filters}\" -c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}"
 # )
+
 # Change this line in your script:
+# cmd = (
+#     f"./ffmpeg -y -framerate {FPS} -i {TEMP_DIR}/frame_%04d.png "
+#     f"-vf \"{draw_filters}\" -c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}"
+# )
+
+# Fixing Cpanel font issues
 cmd = (
     f"./ffmpeg -y -framerate {FPS} -i {TEMP_DIR}/frame_%04d.png "
-    f"-vf \"{draw_filters}\" -c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}"
+    f"-c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}"
 )
+
 
 
 print("Encoding video...")
