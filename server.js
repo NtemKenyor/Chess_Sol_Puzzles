@@ -203,6 +203,77 @@ app.get(MAIN_DIR + '/api/puzzle/:id', async (req, res) => {
   }
 });
 
+
+
+/* =========================
+   GET RANDOM PUZZLE BY RATING
+   ========================= */
+app.get(MAIN_DIR + '/api/puzzle/random-by-rating', async (req, res) => {
+  try {
+    let { min, max } = req.query;
+
+    min = min ? parseInt(min) : 0;
+    max = max ? parseInt(max) : 9999;
+
+    if (isNaN(min) || isNaN(max)) {
+      return res.status(400).json({ error: 'Invalid rating range' });
+    }
+
+    // 1. Count puzzles in rating range
+    const [[{ total }]] = await pool.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM puzzles
+      WHERE Rating BETWEEN ? AND ?
+      `,
+      [min, max]
+    );
+
+    if (!total) {
+      return res.status(404).json({
+        error: 'No puzzles found in this rating range'
+      });
+    }
+
+    // 2. Random offset
+    const offset = Math.floor(Math.random() * total);
+
+    // 3. Fetch random puzzle
+    const [rows] = await pool.query(
+      `
+      SELECT
+        PuzzleId AS id,
+        FEN AS fen,
+        Moves AS moves,
+        Rating AS rating,
+        Themes AS themes
+      FROM puzzles
+      WHERE Rating BETWEEN ? AND ?
+      LIMIT 1 OFFSET ?
+      `,
+      [min, max, offset]
+    );
+
+    const puzzle = rows[0];
+    const moves = puzzle.moves.trim().split(' ').filter(Boolean);
+
+    res.json({
+      id: puzzle.id,
+      fen: puzzle.fen,
+      rating: puzzle.rating || 1500,
+      themes: puzzle.themes || 'tactical',
+      moves,
+      totalMoves: moves.length,
+      ratingRange: { min, max }
+    });
+
+  } catch (err) {
+    console.error('DB Error (random by rating):', err.message);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+
 /* =========================
    SERVER
    ========================= */

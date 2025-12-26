@@ -9,3 +9,4 @@ dist/*
 coverage/
 *.pdf
 .logs
+auto_post/chess_env/*
