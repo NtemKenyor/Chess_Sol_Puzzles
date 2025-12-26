@@ -18,6 +18,7 @@ if not os.path.exists(TEMP_DIR): os.makedirs(TEMP_DIR)
 # 1. Fetch Puzzle
 print("Fetching puzzle...")
 data = requests.get(API_URL).json()
+print("data gotten: ", data)
 starting_fen = data['fen']
 moves = data['moves']  # List: ["a7c5", "b2g2"]
 rating = data['rating']
