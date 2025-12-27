@@ -7,6 +7,8 @@ import subprocess
 import requests
 import random
 import shutil
+import json
+
 
 # --- CONFIGURATION ---
 API_URL = "https://roynek.com/Chess_Sol_Puzzles/api/puzzle/random-by-rating?min=1000"
