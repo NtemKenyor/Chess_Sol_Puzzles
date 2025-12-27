@@ -11,3 +11,8 @@ coverage/
 .logs
 auto_post/chess_env/*
 auto_post/frames
+
+
+auto_post/chess_short*
+auto_post/chess_short.mp4
+auto_post/temp/*
