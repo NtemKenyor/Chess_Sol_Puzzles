@@ -52,10 +52,10 @@ def send_to_social_media_api(platform, link, text, media=None, area=None):
     payload = {
         'link_2_post': link,
         'message': text,
-        'media': media,
+        'image': media,
         'pages_ordered_ids': area,
     }
-    
+
     headers = {'Content-Type': 'application/json'}
     try:
         response = requests.post(api_url, json=payload, headers=headers, timeout=30)
