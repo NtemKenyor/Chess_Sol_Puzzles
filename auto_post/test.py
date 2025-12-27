@@ -57,6 +57,8 @@ def send_to_social_media_api(platform, link, text, media=None, area=None):
     }
 
     headers = {'Content-Type': 'application/json'}
+    print(json.dumps(payload, ensure_ascii=False))
+
     try:
         response = requests.post(api_url, json=payload, headers=headers, timeout=3000)
         response.raise_for_status()
@@ -199,8 +201,10 @@ msg = random.choice(MESSAGES).format(
 )
 
 tags = " ".join(random.sample(HASHTAGS, 3))
-full_message = f"{msg}\n\n{tags}\n\n@followers"
+# full_message = f"{msg}\n\n{tags}\n\n@followers"
+full_message = f" {msg} {tags} @followers "
 safe_message = full_message.replace("\n", " ").strip()
+safe_message = full_message.encode("ascii", "ignore").decode()
 
 puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
