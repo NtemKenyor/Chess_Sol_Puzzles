@@ -223,7 +223,7 @@ print("Facebook: Social API Response:", output)
 output_x = send_to_social_media_api(
     platform='x',
     link=puzzle_link,
-    text=full_message,
+    text=safe_message,
     media=video_url,
     area='21'
 )
