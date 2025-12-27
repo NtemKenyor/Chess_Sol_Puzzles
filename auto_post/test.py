@@ -14,7 +14,8 @@ FPS = 30
 COUNTDOWN_SEC = 4
 MOVE_SEC = 1
 TEMP_DIR = "frames"
-OUTPUT_VIDEO = "chess_short.mp4"
+# OUTPUT_VIDEO = "chess_short.mp4"
+OUTPUT_VIDEO = "output_video/chess_short.mp4"
 FONT_PATH = "./Roboto-Regular.ttf"
 BOARD_SIZE = 800
 
@@ -51,7 +52,7 @@ def send_to_social_media_api(platform, link, text, media=None, area=None):
     payload = {
         'link_2_post': link,
         'message': text,
-        'media_url': media,
+        'media': media,
         'pages_ordered_ids': area,
     }
     headers = {'Content-Type': 'application/json'}
