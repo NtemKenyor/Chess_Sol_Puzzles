@@ -10,3 +10,4 @@ coverage/
 *.pdf
 .logs
 auto_post/chess_env/*
+auto_post/frames

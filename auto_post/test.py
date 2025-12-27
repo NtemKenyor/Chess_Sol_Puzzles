@@ -148,14 +148,14 @@ full_message = f"{random_msg}\n\n{random_tags}\n\n@followers"
 puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 
-social_result = send_to_social_media_api(
-    platform='facebook',
-    link=puzzle_link,
-    text=full_message,
-    media=video_url,
-    area='3'
-)
-print("Facebook Response:", social_result)
+# social_result = send_to_social_media_api(
+#     platform='facebook',
+#     link=puzzle_link,
+#     text=full_message,
+#     media=video_url,
+#     area='3'
+# )
+# print("Facebook Response:", social_result)
 
 # Cleanup
 for f in os.listdir(TEMP_DIR):
