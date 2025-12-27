@@ -200,6 +200,7 @@ msg = random.choice(MESSAGES).format(
 
 tags = " ".join(random.sample(HASHTAGS, 3))
 full_message = f"{msg}\n\n{tags}\n\n@followers"
+safe_message = full_message.replace("\n", " ").strip()
 
 puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
@@ -207,7 +208,7 @@ video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 output = send_to_social_media_api(
     platform='facebook',
     link=puzzle_link,
-    text=full_message,
+    text=safe_message,
     media=video_url,
     area='6'
 )
@@ -219,7 +220,7 @@ output = send_to_social_media_api(
 print("Facebook: Social API Response:", output)
 
 
-output = send_to_social_media_api(
+output_x = send_to_social_media_api(
     platform='x',
     link=puzzle_link,
     text=full_message,
@@ -229,7 +230,7 @@ output = send_to_social_media_api(
 
 
 
-print("Facebook: Social API Response:", output)
+print("X: Social API Response:", output_x)
 
 
 # Cleanup
