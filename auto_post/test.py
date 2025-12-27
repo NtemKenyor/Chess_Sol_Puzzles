@@ -219,9 +219,9 @@ output = send_to_social_media_api(
     area='6'
 )
 
-# 6=chessSol
-# 3=Nataya
-# 7=Roynek Technologies
+# # 6=chessSol
+# # 3=Nataya
+# # 7=Roynek Technologies
 
 print("Facebook: Social API Response:", output)
 
@@ -231,7 +231,7 @@ output_x = send_to_social_media_api(
     link=puzzle_link,
     text=safe_message,
     media=video_url,
-    area='21'
+    area='k'
 )
 
 
