@@ -52,13 +52,13 @@ def send_to_social_media_api(platform, link, text, media=None, area=None):
     payload = {
         'link_2_post': link,
         'message': text,
-        'image': media,
+        'media': media,
         'pages_ordered_ids': area,
     }
 
     headers = {'Content-Type': 'application/json'}
     try:
-        response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+        response = requests.post(api_url, json=payload, headers=headers, timeout=3000)
         response.raise_for_status()
         return response.text
     except Exception as e:
@@ -209,8 +209,25 @@ output = send_to_social_media_api(
     link=puzzle_link,
     text=full_message,
     media=video_url,
-    area='3'
+    area='6'
 )
+
+# 6=chessSol
+# 3=Nataya
+# 7=Roynek Technologies
+
+print("Facebook: Social API Response:", output)
+
+
+output = send_to_social_media_api(
+    platform='x',
+    link=puzzle_link,
+    text=full_message,
+    media=video_url,
+    area='21'
+)
+
+
 
 print("Facebook: Social API Response:", output)
 
