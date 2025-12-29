@@ -13,7 +13,7 @@ import json
 # --- CONFIGURATION ---
 API_URL = "https://roynek.com/Chess_Sol_Puzzles/api/puzzle/random-by-rating?min=1000"
 FPS = 30
-COUNTDOWN_SEC = 4
+COUNTDOWN_SEC = 10
 MOVE_SEC = 1
 TEMP_DIR = "frames"
 # OUTPUT_VIDEO = "chess_short.mp4"
@@ -49,13 +49,15 @@ def detect_ffmpeg():
 FFMPEG_BIN = detect_ffmpeg()
 print("Using FFmpeg:", FFMPEG_BIN)
 
-def send_to_social_media_api(platform, link, text, media=None, area=None):
+def send_to_social_media_api(platform, link, text, media=None, area=None, x_comm_id=None, fb_post_to=None):
     api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
     payload = {
         'link_2_post': link,
         'message': text,
         'media': media,
         'pages_ordered_ids': area,
+        'comm_id': x_comm_id,
+        'post_to': fb_post_to
     }
 
     headers = {'Content-Type': 'application/json'}
@@ -223,15 +225,19 @@ output = send_to_social_media_api(
 # # 3=Nataya
 # # 7=Roynek Technologies
 
+
 print("Facebook: Social API Response:", output)
 
+chess_comm = "1578034816620310528"
 
 output_x = send_to_social_media_api(
     platform='x',
     link=puzzle_link,
     text=safe_message,
     media=video_url,
-    area='k'
+    area='21',
+    x_comm_id=chess_comm,
+    fb_post_to="reels"
 )
 
 

@@ -206,7 +206,7 @@ msg = random.choice(MESSAGES).format(
 
 tags = " ".join(random.sample(HASHTAGS, 3))
 # full_message = f"{msg}\n\n{tags}\n\n@followers"
-full_message = f" {msg} {tags} @followers "
+full_message = f" {msg} {tags}  "
 safe_message = full_message.replace("\n", " ").strip()
 safe_message = full_message.encode("ascii", "ignore").decode()
 
@@ -218,7 +218,8 @@ output = send_to_social_media_api(
     link=puzzle_link,
     text=safe_message,
     media=video_url,
-    area='6'
+    area='6',
+    fb_post_to="reels"
 )
 
 # # 6=chessSol
@@ -228,21 +229,18 @@ output = send_to_social_media_api(
 
 print("Facebook: Social API Response:", output)
 
-chess_comm = "1578034816620310528"
+# chess_comm = "1578034816620310528"
 
-output_x = send_to_social_media_api(
-    platform='x',
-    link=puzzle_link,
-    text=safe_message,
-    media=video_url,
-    area='21',
-    x_comm_id=chess_comm,
-    fb_post_to="reels"
-)
-
-
-
-print("X: Social API Response:", output_x)
+# output_x = send_to_social_media_api(
+#     platform='x',
+#     link=puzzle_link,
+#     text=safe_message,
+#     media=video_url,
+#     area='21',
+#     x_comm_id=chess_comm,
+#     # fb_post_to="reels"
+# )
+# print("X: Social API Response:", output_x)
 
 
 # Cleanup
