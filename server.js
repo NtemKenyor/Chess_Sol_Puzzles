@@ -259,47 +259,6 @@ app.post(MAIN_DIR + '/api/puzzle/verify', async (req, res) => {
   }
 });
 
-/* =========================
-   GET PUZZLE BY ID
-   ========================= */
-app.get(MAIN_DIR + '/api/puzzle/:id', async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      `
-      SELECT
-        PuzzleId AS id,
-        FEN AS fen,
-        Moves AS moves,
-        Rating AS rating,
-        Themes AS themes
-      FROM puzzles
-      WHERE PuzzleId = ?
-      LIMIT 1
-      `,
-      [req.params.id]
-    );
-
-    if (!rows.length) {
-      return res.status(404).json({ error: 'Puzzle not found' });
-    }
-
-    const puzzle = rows[0];
-    const moves = puzzle.moves.trim().split(' ').filter(Boolean);
-
-    res.json({
-      id: puzzle.id,
-      fen: puzzle.fen,
-      rating: puzzle.rating || 1500,
-      themes: puzzle.themes || 'tactical',
-      moves,
-      movesCount: moves.length
-    });
-
-  } catch (err) {
-    console.error('DB Error (get puzzle by id):', err.message);
-    res.status(500).json({ error: 'Database error' });
-  }
-});
 
 
 app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
@@ -366,6 +325,7 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
       SELECT
         PuzzleId AS id,
         FEN AS fen,
+        Moves AS moves,
         Rating AS rating,
         Themes AS themes,
         OpeningTags AS opening,
@@ -392,6 +352,51 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
+
+
+/* =========================
+   GET PUZZLE BY ID
+   ========================= */
+app.get(MAIN_DIR + '/api/puzzle/:id', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `
+      SELECT
+        PuzzleId AS id,
+        FEN AS fen,
+        Moves AS moves,
+        Rating AS rating,
+        Themes AS themes
+      FROM puzzles
+      WHERE PuzzleId = ?
+      LIMIT 1
+      `,
+      [req.params.id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Puzzle not found' });
+    }
+
+    const puzzle = rows[0];
+    const moves = puzzle.moves.trim().split(' ').filter(Boolean);
+
+    res.json({
+      id: puzzle.id,
+      fen: puzzle.fen,
+      rating: puzzle.rating || 1500,
+      themes: puzzle.themes || 'tactical',
+      moves,
+      movesCount: moves.length
+    });
+
+  } catch (err) {
+    console.error('DB Error (get puzzle by id):', err.message);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 
 
 /* =========================
