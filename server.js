@@ -66,6 +66,36 @@ async function getPuzzleCount() {
   return PUZZLE_COUNT;
 }
 
+function extractSearchTokens(q) {
+  q = q.toLowerCase();
+
+  const map = {
+    'mate in 1': ['mateIn1', 'mate'],
+    'mate in 2': ['mateIn2', 'mate'],
+    'mate in 3': ['mateIn3', 'mate'],
+    'checkmate': ['mate'],
+    'mate': ['mate'],
+    'crushing': ['crushing'],
+    'endgame': ['endgame'],
+    'middlegame': ['middlegame'],
+    'opening': ['opening'],
+    'pawn endgame': ['pawnEndgame'],
+    'advantage': ['advantage'],
+    'knight': ['knight'],
+    'queen': ['queen'],
+    'rook': ['rook'],
+    'bishop': ['bishop']
+  };
+
+  let tokens = [];
+  for (const key in map) {
+    if (q.includes(key)) {
+      tokens.push(...map[key]);
+    }
+  }
+  return [...new Set(tokens)];
+}
+
 /* =========================
    ROUTES
    ========================= */
@@ -271,6 +301,97 @@ app.get(MAIN_DIR + '/api/puzzle/:id', async (req, res) => {
   }
 });
 
+
+app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
+  try {
+    let {
+      q,
+      theme,
+      opening,
+      min,
+      max,
+      limit,
+      page
+    } = req.query;
+
+    min = min ? parseInt(min) : 0;
+    max = max ? parseInt(max) : 9999;
+
+    limit = limit ? Math.min(parseInt(limit), 50) : 20;
+    page = page ? parseInt(page) : 1;
+    const offset = (page - 1) * limit;
+
+    let conditions = [];
+    let params = [];
+
+    // Rating filter
+    conditions.push(`Rating BETWEEN ? AND ?`);
+    params.push(min, max);
+
+    // Theme
+    if (theme) {
+      conditions.push(`Themes LIKE ?`);
+      params.push(`%${theme}%`);
+    }
+
+    // Opening
+    if (opening) {
+      conditions.push(`OpeningTags LIKE ?`);
+      params.push(`%${opening}%`);
+    }
+
+    // Human search
+    if (q) {
+      const tokens = extractSearchTokens(q);
+      if (tokens.length) {
+        conditions.push(
+          '(' + tokens.map(() => `Themes LIKE ?`).join(' OR ') + ')'
+        );
+        tokens.forEach(t => params.push(`%${t}%`));
+      }
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(' AND ')}`
+      : '';
+
+    // Total count (for frontend pagination)
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) AS total FROM puzzles ${whereClause}`,
+      params
+    );
+
+    const [rows] = await pool.query(
+      `
+      SELECT
+        PuzzleId AS id,
+        FEN AS fen,
+        Rating AS rating,
+        Themes AS themes,
+        OpeningTags AS opening,
+        NbPlays AS plays,
+        Popularity AS popularity
+      FROM puzzles
+      ${whereClause}
+      ORDER BY Popularity DESC
+      LIMIT ? OFFSET ?
+      `,
+      [...params, limit, offset]
+    );
+
+    res.json({
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      results: rows
+    });
+
+  } catch (err) {
+    console.error('Puzzle list error:', err.message);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
 
 
 /* =========================
