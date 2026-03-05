@@ -228,17 +228,28 @@ output = send_to_social_media_api(
 
 print("Facebook: Social API Response:", output)
 
-chess_comm = "1578034816620310528"
+# chess_comm = "1578034816620310528"
+# output_x = send_to_social_media_api(
+#     platform='x',
+#     link=puzzle_link,
+#     text=safe_message,
+#     media=video_url,
+#     area='21',
+#     x_comm_id=chess_comm,
+#     fb_post_to="reels"
+# )
 
+
+# chess_comm = "1578034816620310528"
 output_x = send_to_social_media_api(
     platform='x',
     link=puzzle_link,
     text=safe_message,
     media=video_url,
     area='21',
-    x_comm_id=chess_comm,
     fb_post_to="reels"
 )
+
 
 
 

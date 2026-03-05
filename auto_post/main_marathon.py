@@ -11,7 +11,7 @@ import json
 
 # --- CONFIGURATION ---
 FPS = 30
-COUNTDOWN_SEC = 10
+COUNTDOWN_SEC = 30
 MOVE_SEC = 1
 BREAK_SEC = 3  # Break between puzzles
 TEMP_DIR = "frames"
@@ -25,24 +25,35 @@ CLICK_SOUND = "move.mp3"
 
 # Puzzle themes to fetch (mix for variety)
 PUZZLE_THEMES = [
-    {"q": "endgame", "min": 1500, "max": 3000},
-    {"q": "mate in 2", "min": 1200, "max": 2500},
-    {"q": "mate", "min": 1500, "max": 2800},
-    {"theme": "crushing", "min": 1400, "max": 2600},
-    {"q": "fork", "min": 1300, "max": 2400},
-    {"q": "pin", "min": 1300, "max": 2400},
-    {"q": "skewer", "min": 1400, "max": 2500},
+    {"q": "endgame", "min": 1800, "max": 3000},
+    {"q": "mate in 2", "min": 1800, "max": 4500},
+    {"q": "mate", "min": 1900, "max": 4800},
+    {"theme": "crushing", "min": 1700, "max": 4600},
+    {"q": "fork", "min": 1600, "max": 3400},
+    {"q": "pin", "min": 1800, "max": 3400},
+    # {"q": "skewer", "min": 1400, "max": 2500},
 ]
 
-NUM_PUZZLES = 5 #60
+NUM_PUZZLES = 60 #60
 
 # Social media messages for variety
+# MESSAGES = [
+#     "Can you find the winning move? 🧩",
+#     "Test your tactics!",
+#     "What's the best move here?",
+#     "Spot the winning sequence! 🔥",
+#     "Chess puzzle challenge!"
+# ]
+
 MESSAGES = [
-    "Can you find the winning move? 🧩",
+    "Only GrandMaster can get it right.",
+    "Can you find the winning move?",
     "Test your tactics!",
+    "inspired from Grandmaster's games",
     "What's the best move here?",
-    "Spot the winning sequence! 🔥",
-    "Chess puzzle challenge!"
+    "Spot the winning sequence!",
+    "The most complex chess puzzles!",
+    "Chess Puzzle Challenge!"
 ]
 
 # --- UTILITY FUNCTIONS ---
@@ -323,12 +334,24 @@ for idx, puzzle_data in enumerate(puzzles[:total_puzzles], 1):
 print(f"\n[3/3] Encoding video with {frame_count} frames...")
 print("This may take a while for a 1-hour video...")
 
+# cmd = f"""
+# {FFMPEG_BIN} -y -framerate {FPS} -i {TEMP_DIR}/frame_%06d.png \
+# -i {BACKGROUND_MUSIC} -i {CLICK_SOUND} \
+# -filter_complex "[1:a]volume=0.2[a1];[2:a]volume=0.5[a2];[a1][a2]amix=inputs=2:duration=longest[aout]" \
+# -map 0:v -map "[aout]" -c:v libx264 -pix_fmt yuv420p -preset medium -crf 23 -shortest {OUTPUT_VIDEO}
+# """
+
 cmd = f"""
 {FFMPEG_BIN} -y -framerate {FPS} -i {TEMP_DIR}/frame_%06d.png \
--i {BACKGROUND_MUSIC} -i {CLICK_SOUND} \
+-stream_loop -1 -i {BACKGROUND_MUSIC} -i {CLICK_SOUND} \
 -filter_complex "[1:a]volume=0.2[a1];[2:a]volume=0.5[a2];[a1][a2]amix=inputs=2:duration=longest[aout]" \
--map 0:v -map "[aout]" -c:v libx264 -pix_fmt yuv420p -preset medium -crf 23 -shortest {OUTPUT_VIDEO}
+-map 0:v -map "[aout]" \
+-c:v libx264 -pix_fmt yuv420p -preset medium -crf 23 \
+-shortest {OUTPUT_VIDEO}
 """
+
+
+
 
 try:
     subprocess.run(cmd, shell=True, check=True)
