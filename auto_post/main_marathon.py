@@ -594,7 +594,7 @@ print(f"\n📢  Social copy: {social_msg}\n    {tags}")
 
 tags = " ".join(random.sample(HASHTAGS, 3))
 # full_message = f"{msg}\n\n{tags}\n\n@followers"
-full_message = f" {social_msg} {tags} . @followers "
+full_message = f" {social_msg} {tags} . "
 safe_message = full_message.replace("\n", " ").strip()
 safe_message = full_message.encode("ascii", "ignore").decode()
 
