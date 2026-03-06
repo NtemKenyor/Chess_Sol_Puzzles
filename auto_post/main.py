@@ -33,7 +33,9 @@ MESSAGES = [
     "What is the best move here? ({side} to play)",
     "Spot the winning sequence! 🔥 ({side})"
 ]
-HASHTAGS = ["#Chess", "#ChessPuzzles", "#Tactics", "#BrainTeaser"]
+# HASHTAGS = ["#Chess", "#ChessPuzzles", "#Tactics", "#BrainTeaser"]
+HASHTAGS = ["#ChessTactics", "#ChessStrategy", "#Checkmate", "#Grandmaster", "#Chess", "#ChessReels", "#BoardGames", "#ChessPunks", "#ChessSol", "#Checkmate", "#LearnChess", "#ChessMasterclass", "#ChessTips", "#PuzzleSolving", "#MentalGym", "#StrategicThinking", "#SpeedChess"]
+
 
 # --- UTILITY FUNCTIONS ---
 def detect_ffmpeg():

@@ -84,7 +84,9 @@ SOCIAL_MESSAGES = [
     "Marathon chess challenge 🔥 — {n} puzzles, can you ace them all?",
     "Train like a GM — {n} tactical puzzles back to back!",
 ]
-HASHTAGS = ["#Chess", "#ChessPuzzles", "#Tactics", "#BrainTeaser", "#ChessMarathon"]
+# HASHTAGS = ["#Chess", "#ChessPuzzles", "#Tactics", "#BrainTeaser", "#ChessMarathon"]
+HASHTAGS = ["#ChessTactics", "#ChessStrategy", "#Checkmate", "#Grandmaster", "#Chess", "#ChessReels", "#BoardGames", "#ChessPunks", "#ChessSol", "#Checkmate", "#LearnChess", "#ChessMasterclass", "#ChessTips", "#PuzzleSolving", "#MentalGym", "#StrategicThinking", "#SpeedChess"]
+
 
 
 # ═══════════════════════════════════════════════════════════
