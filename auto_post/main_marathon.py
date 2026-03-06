@@ -30,7 +30,11 @@ BOARD_SIZE    = 800
 # ── Intro Audio ───────────────────────────────────────────
 # Folder with YOUR recorded intro files. Picked once, at the very start.
 # Supported: .mp3  .wav  .ogg  .m4a
-INTRO_AUDIO_DIR = "./intro_sounds"
+# INTRO_AUDIO_DIR = "./intro_sounds"
+# INTRO_AUDIO_DIR = "./intro_sounds"
+ls = ["./intro_sounds", "/intro_fake"] # intro_fake does not exist. I am using it to skip intro audios..
+INTRO_AUDIO_DIR = random.choice(ls)    # ← point this at your folder
+
 
 # ── Background & Click Audio ──────────────────────────────
 # Use royalty-free / CC0 files. Good sources:
