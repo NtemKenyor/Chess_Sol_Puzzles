@@ -9,31 +9,36 @@ import random
 import shutil
 import json
 import math
-import sys
 
 # ─────────────────────────────────────────────
 #  CONFIGURATION
 # ─────────────────────────────────────────────
 API_URL       = "https://roynek.com/Chess_Sol_Puzzles/api/puzzle/random-by-rating?min=1600"
 FPS           = 30
-COUNTDOWN_SEC = 15          # ⬆ was 10
-INTRO_SEC     = 3           # hold the "initial position" before first move
-ARROW_SEC     = 2           # ⬆ show arrow BEFORE executing a move
-MOVE_SEC      = 2           # ⬆ was 1 – hold after move plays
+COUNTDOWN_SEC = 15          # seconds for the thinking countdown
+INTRO_SEC     = 3           # hold initial position before first move
+ARROW_SEC     = 2           # show arrow before each move plays
+MOVE_SEC      = 2           # hold board after each move plays
 FINAL_SEC     = 3           # pause at end
+
 TEMP_DIR      = "frames"
 OUTPUT_VIDEO  = "output_video/chess_short.mp4"
 FONT_PATH     = "./Roboto-Regular.ttf"
 BOARD_SIZE    = 800
 
-# Audio
-BACKGROUND_MUSIC  = "bg_music.mp3"
-CLICK_SOUND       = "move.mp3"
-BG_MUSIC_VOLUME   = 0.15    # ⬇ was 0.3  (0 = off, 1 = full)
-INCLUDE_BG_MUSIC  = True    # set False to skip background music entirely
-TTS_INTRO_FILE    = "tts_intro.mp3"   # generated at runtime
+# ── Audio ─────────────────────────────────────
+# Use royalty-free / CC0 licensed audio files only.
+# Good free sources:
+#   Music  → https://pixabay.com/music/  (free for commercial use)
+#             https://freemusicarchive.org (check licence per track)
+#   Clicks → https://freesound.org        (filter by CC0)
+BACKGROUND_MUSIC = "bg_music.mp3"   # soft ambient / lo-fi track
+CLICK_SOUND      = "move.mp3"       # short piece-move click
+BG_MUSIC_VOLUME  = 0.12             # very subtle — won't compete with anything (0.0–1.0)
+CLICK_VOLUME     = 0.65             # audible but not harsh
+INCLUDE_BG_MUSIC = True             # set False for a fully silent video
 
-# Social copy
+# ── Social copy ───────────────────────────────
 MESSAGES = [
     "Can you find the winning move? 🧩 ({side} to move)",
     "Today's daily challenge — {side} to move!",
@@ -55,7 +60,10 @@ def detect_ffmpeg():
     if os.path.exists(local_bin):
         os.chmod(local_bin, 0o755)
         return local_bin
-    raise FileNotFoundError("FFmpeg not found")
+    raise FileNotFoundError(
+        "FFmpeg not found. Install it (sudo apt install ffmpeg) "
+        "or place the static binary in the project root."
+    )
 
 FFMPEG_BIN = detect_ffmpeg()
 print("Using FFmpeg:", FFMPEG_BIN)
@@ -64,11 +72,11 @@ print("Using FFmpeg:", FFMPEG_BIN)
 def send_to_social_media_api(platform, link, text, media=None, area=None,
                               x_comm_id=None, fb_post_to=None):
     api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
-    payload  = {
+    payload = {
         'link_2_post': link, 'message': text, 'media': media,
         'pages_ordered_ids': area, 'comm_id': x_comm_id, 'post_to': fb_post_to
     }
-    headers  = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json'}
     print(json.dumps(payload, ensure_ascii=False))
     try:
         r = requests.post(api_url, json=payload, headers=headers, timeout=3000)
@@ -80,91 +88,12 @@ def send_to_social_media_api(platform, link, text, media=None, area=None,
 
 
 # ─────────────────────────────────────────────
-#  TTS INTRO GENERATION
-# ─────────────────────────────────────────────
-INTRO_TEMPLATES = [
-    "In {n} moves, can you spot the checkmate?",
-    "White has a {n}-move winning combination. Can you see it?",
-    "Black has a brilliant {n}-move sequence. Find it!",
-    "In just {n} moves, {side} wins. Think you can solve it?",
-    "This is a {rating}-rated puzzle. {side} to move — find the best line!",
-    "Here's your daily chess challenge. {side} to move in {n} moves!",
-    "Sharp tactics ahead! {side} to move. Can you crack it?",
-    "Think fast! {side} has a killer {n}-move combo. Spot it!",
-]
-
-def build_intro_text(moves, side_to_move, rating):
-    n     = (len(moves) + 1) // 2   # moves for the puzzle side
-    n_str = ["one","two","three","four","five","six","seven","eight"][min(n,8)-1]
-    tpl   = random.choice(INTRO_TEMPLATES)
-    return tpl.format(n=n_str, side=side_to_move, rating=rating)
-
-def generate_tts(text, out_file):
-    """
-    Try several free TTS methods in order of preference:
-      1. edge-tts  (Microsoft Neural voices, free, needs internet)
-      2. pyttsx3   (offline, robotic but reliable)
-      3. espeak    (system, very robotic)
-    Writes an MP3/WAV to out_file.
-    """
-    # --- edge-tts ---
-    try:
-        import edge_tts, asyncio
-        voice    = random.choice(["en-US-GuyNeural", "en-US-JennyNeural",
-                                  "en-GB-RyanNeural", "en-AU-NatashaNeural"])
-        wav_tmp  = out_file.replace(".mp3", "_tmp.mp3")
-        async def _run():
-            comm = edge_tts.Communicate(text, voice)
-            await comm.save(wav_tmp)
-        asyncio.run(_run())
-        os.rename(wav_tmp, out_file)
-        print(f"[TTS] edge-tts ✓  voice={voice}")
-        return True
-    except Exception as e:
-        print(f"[TTS] edge-tts failed: {e}")
-
-    # --- pyttsx3 ---
-    try:
-        import pyttsx3, tempfile
-        engine  = pyttsx3.init()
-        engine.setProperty('rate', 150)
-        tmp_wav = out_file.replace(".mp3", "_pyttsx3.wav")
-        engine.save_to_file(text, tmp_wav)
-        engine.runAndWait()
-        # convert wav→mp3 via ffmpeg
-        subprocess.run(
-            [FFMPEG_BIN, "-y", "-i", tmp_wav, out_file],
-            check=True, capture_output=True
-        )
-        os.remove(tmp_wav)
-        print("[TTS] pyttsx3 ✓")
-        return True
-    except Exception as e:
-        print(f"[TTS] pyttsx3 failed: {e}")
-
-    # --- espeak ---
-    try:
-        wav_tmp = out_file.replace(".mp3", "_espeak.wav")
-        subprocess.run(["espeak", "-w", wav_tmp, text], check=True, capture_output=True)
-        subprocess.run([FFMPEG_BIN, "-y", "-i", wav_tmp, out_file],
-                       check=True, capture_output=True)
-        os.remove(wav_tmp)
-        print("[TTS] espeak ✓")
-        return True
-    except Exception as e:
-        print(f"[TTS] espeak failed: {e}")
-
-    print("[TTS] All methods failed — video will have no spoken intro.")
-    return False
-
-
-# ─────────────────────────────────────────────
 #  DRAWING HELPERS
 # ─────────────────────────────────────────────
 SQUARE_SIZE = BOARD_SIZE // 8
 
 def square_to_pixel(square, flip=False):
-    """Return (cx, cy) pixel center of a chess square."""
+    """Return (cx, cy) pixel centre of a chess square."""
     col = chess.square_file(square)
     row = chess.square_rank(square)
     if flip:
@@ -176,20 +105,20 @@ def square_to_pixel(square, flip=False):
     cy = row * SQUARE_SIZE + SQUARE_SIZE // 2
     return cx, cy
 
+
 def draw_arrow(draw, from_sq, to_sq, flip=False,
-               color=(255, 170, 0, 210), shaft_w=18, head_size=36):
-    """Draw a bold arrow from from_sq → to_sq on a PIL ImageDraw."""
+               color=(255, 170, 0, 220), shaft_w=18, head_size=36):
+    """Draw a bold golden arrow from_sq → to_sq on a PIL ImageDraw (RGBA mode)."""
     x1, y1 = square_to_pixel(from_sq, flip)
     x2, y2 = square_to_pixel(to_sq,   flip)
 
-    angle  = math.atan2(y2 - y1, x2 - x1)
-    length = math.hypot(x2 - x1, y2 - y1)
+    angle = math.atan2(y2 - y1, x2 - x1)
 
-    # Shorten end so arrowhead looks right
-    tip_x  = x2 - head_size * 0.6 * math.cos(angle)
-    tip_y  = y2 - head_size * 0.6 * math.sin(angle)
+    # Shorten tip so the arrowhead sits neatly inside the target square
+    tip_x = x2 - head_size * 0.6 * math.cos(angle)
+    tip_y = y2 - head_size * 0.6 * math.sin(angle)
 
-    # Shaft
+    # Shaft (parallelogram)
     dx = math.sin(angle) * shaft_w / 2
     dy = math.cos(angle) * shaft_w / 2
     shaft = [
@@ -203,19 +132,21 @@ def draw_arrow(draw, from_sq, to_sq, flip=False,
     # Arrowhead (triangle)
     perp_x = math.sin(angle) * head_size
     perp_y = math.cos(angle) * head_size
-    head   = [
-        (x2,              y2),
-        (tip_x + perp_x,  tip_y - perp_y),
-        (tip_x - perp_x,  tip_y + perp_y),
+    head = [
+        (x2,             y2),
+        (tip_x + perp_x, tip_y - perp_y),
+        (tip_x - perp_x, tip_y + perp_y),
     ]
     draw.polygon(head, fill=color)
 
 
-def create_frame_image(board, last_move=None, arrow_move=None, timer=None,
-                       rating=None, side_to_move=None, flip=False):
+def create_frame_image(board, last_move=None, arrow_move=None,
+                       timer=None, rating=None, side_to_move=None, flip=False):
     """
-    Render a single frame.
-    arrow_move : chess.Move  – draw a golden arrow (shown BEFORE the move plays)
+    Render one video frame as a PIL RGB Image.
+
+    arrow_move : chess.Move  – golden arrow shown BEFORE the move executes
+    timer      : int         – countdown number shown in the centre of the board
     """
     svg_data = chess.svg.board(
         board,
@@ -224,43 +155,40 @@ def create_frame_image(board, last_move=None, arrow_move=None, timer=None,
         flipped=flip
     ).encode("UTF-8")
 
-    tmp_png = os.path.join(TEMP_DIR, "tmp_frame.png")
+    tmp_png = os.path.join(TEMP_DIR, "_tmp_frame.png")
     cairosvg.svg2png(bytestring=svg_data, write_to=tmp_png)
 
     im   = Image.open(tmp_png).convert("RGBA")
     draw = ImageDraw.Draw(im, "RGBA")
 
-    # ── Arrow overlay ──────────────────────────────────
+    # ── Arrow overlay ──────────────────────────────────────
     if arrow_move is not None:
         draw_arrow(draw, arrow_move.from_square, arrow_move.to_square, flip=flip)
 
-    # ── Text overlays ─────────────────────────────────
+    # ── Fonts ──────────────────────────────────────────────
     try:
-        font_large  = ImageFont.truetype(FONT_PATH, 60)
-        font_medium = ImageFont.truetype(FONT_PATH, 36)
-        font_small  = ImageFont.truetype(FONT_PATH, 28)
+        font_large = ImageFont.truetype(FONT_PATH, 60)
+        font_small = ImageFont.truetype(FONT_PATH, 28)
     except Exception:
-        font_large = font_medium = font_small = ImageFont.load_default()
+        font_large = font_small = ImageFont.load_default()
 
-    # Semi-transparent top bar
-    bar_h = 80
-    bar   = Image.new("RGBA", (BOARD_SIZE, bar_h), (0, 0, 0, 160))
+    # ── Semi-transparent top info bar ─────────────────────
+    bar = Image.new("RGBA", (BOARD_SIZE, 78), (0, 0, 0, 165))
     im.paste(bar, (0, 0), bar)
-    draw  = ImageDraw.Draw(im, "RGBA")   # refresh after paste
+    draw = ImageDraw.Draw(im, "RGBA")   # refresh draw handle after paste
 
-    draw.text((16, 10),  f"Rating: {rating}",     font=font_small,  fill="white")
-    draw.text((16, 42),  f"{side_to_move} to move", font=font_small, fill="#FFD700")
+    draw.text((16, 10), f"Rating: {rating}",       font=font_small, fill="white")
+    draw.text((16, 44), f"{side_to_move} to move", font=font_small, fill="#FFD700")
 
-    # Countdown
+    # ── Countdown ──────────────────────────────────────────
     if timer is not None:
         txt  = str(timer)
         bbox = draw.textbbox((0, 0), txt, font=font_large)
         w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        cx, cy = (BOARD_SIZE - w) // 2, (BOARD_SIZE - h) // 2
-
-        # shadow
-        draw.text((cx + 3, cy + 3), txt, font=font_large, fill=(0, 0, 0, 180))
-        draw.text((cx, cy), txt, font=font_large, fill="white")
+        cx   = (BOARD_SIZE - w) // 2
+        cy   = (BOARD_SIZE - h) // 2
+        draw.text((cx + 3, cy + 3), txt, font=font_large, fill=(0, 0, 0, 180))  # shadow
+        draw.text((cx, cy),          txt, font=font_large, fill="white")
 
     return im.convert("RGB")
 
@@ -280,117 +208,87 @@ def save_frames(board, moves, rating, side_to_move, flip=False):
         for _ in range(n):
             save(img)
 
-    # 1 ── Intro hold (no timer, no arrow) ─────────────────
+    # 1 ── Intro hold (clean board, no arrow, no timer) ────
     im = create_frame_image(board, rating=rating, side_to_move=side_to_move, flip=flip)
     save_n(im, FPS * INTRO_SEC)
 
-    # Iterate through moves
+    # 2 ── Move loop ───────────────────────────────────────
     for i, move_uci in enumerate(moves):
         move = chess.Move.from_uci(move_uci)
 
-        # 2 ── Arrow preview (BEFORE the move) ─────────────
+        # Arrow preview BEFORE the move executes
         im = create_frame_image(board, arrow_move=move, rating=rating,
                                 side_to_move=side_to_move, flip=flip)
         save_n(im, FPS * ARROW_SEC)
 
-        # Push the move
         board.push(move)
 
-        # 3 ── Show board after move ────────────────────────
-        # After first move → show countdown
         if i == 0:
+            # After the puzzle's first move → show the full countdown
             for sec in range(COUNTDOWN_SEC, 0, -1):
                 im = create_frame_image(board, last_move=move, timer=sec,
                                         rating=rating, side_to_move=side_to_move, flip=flip)
                 save_n(im, FPS)
         else:
+            # Solution moves → brief hold so viewer can follow
             im = create_frame_image(board, last_move=move, rating=rating,
                                     side_to_move=side_to_move, flip=flip)
             save_n(im, FPS * MOVE_SEC)
 
-    # 4 ── Final pause ──────────────────────────────────────
+    # 3 ── Final pause ─────────────────────────────────────
     im = create_frame_image(board, rating=rating, side_to_move=side_to_move, flip=flip)
     save_n(im, FPS * FINAL_SEC)
 
-    print(f"[frames] total frames saved: {frame_count}")
+    print(f"[frames] Total frames saved: {frame_count}")
 
 
 # ─────────────────────────────────────────────
 #  VIDEO ENCODING
 # ─────────────────────────────────────────────
-def encode_video(tts_available):
-    """Build the ffmpeg command based on which audio tracks exist."""
-    video_input = f"-framerate {FPS} -i {TEMP_DIR}/frame_%05d.png"
+def encode_video():
+    """Combine frames + optional background music + click sound into final MP4."""
+    video_part = f"-framerate {FPS} -i {TEMP_DIR}/frame_%05d.png"
 
-    # Build audio filter graph
-    audio_inputs   = []
-    filter_complex = ""
+    has_music = INCLUDE_BG_MUSIC and os.path.exists(BACKGROUND_MUSIC)
+    has_click = os.path.exists(CLICK_SOUND)
 
-    if tts_available and os.path.exists(TTS_INTRO_FILE):
-        audio_inputs.append(f"-i {TTS_INTRO_FILE}")          # [1:a] TTS
-    if INCLUDE_BG_MUSIC and os.path.exists(BACKGROUND_MUSIC):
-        audio_inputs.append(f"-i {BACKGROUND_MUSIC}")         # [2:a] or [1:a]
-    if os.path.exists(CLICK_SOUND):
-        audio_inputs.append(f"-i {CLICK_SOUND}")
+    if not has_music and not has_click:
+        # Silent video
+        cmd = (
+            f"{FFMPEG_BIN} -y {video_part} "
+            f"-c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}"
+        )
 
-    n_audio = len(audio_inputs)
+    elif has_music and has_click:
+        cmd = (
+            f"{FFMPEG_BIN} -y {video_part} "
+            f"-i {BACKGROUND_MUSIC} -i {CLICK_SOUND} "
+            f'-filter_complex "'
+            f"[1:a]volume={BG_MUSIC_VOLUME}[bg];"
+            f"[2:a]volume={CLICK_VOLUME}[clk];"
+            f"[bg][clk]amix=inputs=2:duration=longest[aout]"
+            f'" '
+            f"-map 0:v -map [aout] -c:v libx264 -pix_fmt yuv420p -shortest {OUTPUT_VIDEO}"
+        )
 
-    if n_audio == 0:
-        # No audio at all
-        cmd = (f"{FFMPEG_BIN} -y {video_input} "
-               f"-c:v libx264 -pix_fmt yuv420p {OUTPUT_VIDEO}")
-
-    elif n_audio == 1 and tts_available:
-        # TTS only
-        cmd = (f"{FFMPEG_BIN} -y {video_input} {audio_inputs[0]} "
-               f"-map 0:v -map 1:a -c:v libx264 -pix_fmt yuv420p -shortest {OUTPUT_VIDEO}")
-
-    elif INCLUDE_BG_MUSIC and not tts_available:
-        # bg music + click
-        bg_idx   = 1
-        clk_idx  = 2 if os.path.exists(CLICK_SOUND) else None
-        a_inputs = " ".join(audio_inputs)
-        if clk_idx:
-            fc = (f"[{bg_idx}:a]volume={BG_MUSIC_VOLUME}[bg];"
-                  f"[{clk_idx}:a]volume=0.7[clk];"
-                  f"[bg][clk]amix=inputs=2:duration=longest[aout]")
-        else:
-            fc = f"[{bg_idx}:a]volume={BG_MUSIC_VOLUME}[aout]"
-        cmd = (f"{FFMPEG_BIN} -y {video_input} {a_inputs} "
-               f'-filter_complex "{fc}" '
-               f"-map 0:v -map [aout] -c:v libx264 -pix_fmt yuv420p -shortest {OUTPUT_VIDEO}")
+    elif has_music:
+        cmd = (
+            f"{FFMPEG_BIN} -y {video_part} "
+            f"-i {BACKGROUND_MUSIC} "
+            f'-filter_complex "[1:a]volume={BG_MUSIC_VOLUME}[aout]" '
+            f"-map 0:v -map [aout] -c:v libx264 -pix_fmt yuv420p -shortest {OUTPUT_VIDEO}"
+        )
 
     else:
-        # TTS + bg music + optional click
-        idx  = 1
-        parts_in  = []
-        parts_mix = []
+        # Click sound only
+        cmd = (
+            f"{FFMPEG_BIN} -y {video_part} "
+            f"-i {CLICK_SOUND} "
+            f'-filter_complex "[1:a]volume={CLICK_VOLUME}[aout]" '
+            f"-map 0:v -map [aout] -c:v libx264 -pix_fmt yuv420p -shortest {OUTPUT_VIDEO}"
+        )
 
-        tts_idx = idx; idx += 1
-        parts_in.append(audio_inputs[0])
-        parts_mix.append(f"[{tts_idx}:a]volume=1.0[tts]")
-
-        if INCLUDE_BG_MUSIC and os.path.exists(BACKGROUND_MUSIC):
-            bg_idx = idx; idx += 1
-            parts_in.append(audio_inputs[1])
-            parts_mix.append(f"[{bg_idx}:a]volume={BG_MUSIC_VOLUME}[bg]")
-
-        if os.path.exists(CLICK_SOUND):
-            clk_idx = idx; idx += 1
-            parts_in.append(audio_inputs[-1])
-            parts_mix.append(f"[{clk_idx}:a]volume=0.7[clk]")
-
-        labels  = "[tts]" + ("[bg]" if INCLUDE_BG_MUSIC and os.path.exists(BACKGROUND_MUSIC) else "") \
-                           + ("[clk]" if os.path.exists(CLICK_SOUND) else "")
-        n_mix   = labels.count("[")
-        mix_fc  = ";".join(parts_mix) + f";{labels}amix=inputs={n_mix}:duration=longest[aout]"
-
-        a_inputs_str = " ".join(parts_in)
-        cmd = (f"{FFMPEG_BIN} -y {video_input} {a_inputs_str} "
-               f'-filter_complex "{mix_fc}" '
-               f"-map 0:v -map [aout] -c:v libx264 -pix_fmt yuv420p -shortest {OUTPUT_VIDEO}")
-
-    print("[ffmpeg] Running:", cmd[:200], "...")
+    print("[ffmpeg]", cmd[:200], "...")
     subprocess.run(cmd, shell=True, check=True)
 
 
@@ -410,32 +308,26 @@ rating = data['rating']
 
 solver_color = not board.turn
 side_to_move = "White" if solver_color == chess.WHITE else "Black"
-flip         = (solver_color == chess.BLACK)   # flip board so solver is at bottom
+flip         = (solver_color == chess.BLACK)   # solver's pieces always at the bottom
 
-# ── TTS intro ──────────────────────────────────────────────
-intro_text    = build_intro_text(moves, side_to_move, rating)
-print(f"[TTS] Intro text: {intro_text}")
-tts_available = generate_tts(intro_text, TTS_INTRO_FILE)
-
-# ── Frames ─────────────────────────────────────────────────
 print("Generating frames...")
 save_frames(board, moves, rating, side_to_move, flip=flip)
 
-# ── Encode ─────────────────────────────────────────────────
 print("Encoding video...")
-encode_video(tts_available)
+encode_video()
 
 # ── Social copy ────────────────────────────────────────────
 msg = random.choice(MESSAGES).format(rating=rating, side=side_to_move)
-print(f"\n📢  Social copy: {msg}")
+print(f"\n📢  Social copy ready: {msg}")
+
+# Uncomment below to post automatically:
+# puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
+# video_url   = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
+# send_to_social_media_api('facebook', puzzle_link, msg, video_url, area='6', fb_post_to='reels')
 
 # ── Cleanup ────────────────────────────────────────────────
 for f in os.listdir(TEMP_DIR):
     os.remove(os.path.join(TEMP_DIR, f))
 os.rmdir(TEMP_DIR)
 
-if tts_available and os.path.exists(TTS_INTRO_FILE):
-    os.remove(TTS_INTRO_FILE)
-
 print(f"\n✅  Done — video saved to: {OUTPUT_VIDEO}")
-print(f"   Intro spoken: {intro_text}")
