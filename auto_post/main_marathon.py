@@ -589,6 +589,28 @@ social_msg = random.choice(SOCIAL_MESSAGES).format(n=total_puzzles)
 tags       = " ".join(random.sample(HASHTAGS, min(4, len(HASHTAGS))))
 print(f"\n📢  Social copy: {social_msg}\n    {tags}")
 
+
+tags = " ".join(random.sample(HASHTAGS, 3))
+# full_message = f"{msg}\n\n{tags}\n\n@followers"
+full_message = f" {social_msg} {tags} . @followers "
+safe_message = full_message.replace("\n", " ").strip()
+safe_message = full_message.encode("ascii", "ignore").decode()
+
+# puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
+puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/"
+video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
+
+output = send_to_social_media_api(
+    platform='facebook',
+    link=puzzle_link,
+    text=safe_message,
+    media=video_url,
+    area='6',
+    fb_post_to="reels"
+)
+
+print("Facebook: Social API Response:", output)
+
 # Uncomment to auto-post:
 # video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 # send_to_social_media_api('facebook', '', social_msg, video_url, area='6', fb_post_to='reels')
