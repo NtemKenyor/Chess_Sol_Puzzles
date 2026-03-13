@@ -23,3 +23,5 @@ auto_post/output_video
 
 experiments/*
 fb_auto_post/env/*
+
+reports/*
