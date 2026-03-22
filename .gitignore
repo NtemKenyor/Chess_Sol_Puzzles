@@ -27,3 +27,8 @@ fb_auto_post/env/*
 reports/*
 
 nohub.out
+
+meme_video_maker/fb_cookies.json
+*/fb_cookies.json
+
+meme_video_maker/venv

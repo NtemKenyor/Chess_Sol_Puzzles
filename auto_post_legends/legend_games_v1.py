@@ -20,17 +20,9 @@ DEFAULT_IMG     = "./default_person.png" # fallback if no photo found
 FPS             = 30
 INTRO_SEC       = 4     # legend intro card hold
 LEGEND_CARD_SEC = 5     # initial board + info overlay
-FINAL_SEC       = 4     # pause at the very end after endgame card
+MOVE_SEC        = 1     # hold per move (fast replay)
+FINAL_SEC       = 4     # pause at the very end
 MAX_RESELECT    = 20    # max legend candidates to try per run
-
-# ── Move Timer ────────────────────────────────────────────────
-# How long each move is held on screen (in seconds).
-# Supports decimals — tune to taste:
-#   0.3  → very fast (blitz feel, great for long games)
-#   0.5  → fast      (default, good for most games)
-#   1.0  → normal    (comfortable to follow)
-#   2.0  → slow      (study / educational pace)
-MOVE_SEC        = 0.5
 
 TEMP_DIR        = "frames"
 OUTPUT_VIDEO    = "output_video/legendary_game.mp4"
@@ -477,109 +469,6 @@ def draw_bottom_bar(im, meta):
     return im
 
 
-ENDGAME_SEC     = 4     # how long the endgame card is shown
-
-
-RESULT_LABEL = {
-    "1-0":     ("WHITE WINS", "#FFD700"),
-    "0-1":     ("BLACK WINS", "#3498DB"),
-    "1/2-1/2": ("DRAW",       "#AAAAAA"),
-}
-
-
-def create_endgame_card(meta, board):
-    """
-    Final card shown after the last move.
-    Darkened final board + centred result panel showing:
-      - Crown icon + result text  (e.g. WHITE WINS)
-      - Legend name
-      - Opponent name
-      - Event · Year
-    """
-    flipped = (meta["legend_color"] == chess.BLACK)
-    im      = render_board_png(board, flipped=flipped)
-
-    # Dark veil
-    overlay = Image.new("RGBA", (BOARD_SIZE, BOARD_SIZE), (0, 0, 0, 185))
-    im      = Image.alpha_composite(im, overlay)
-    draw    = ImageDraw.Draw(im, "RGBA")
-
-    result_str = meta.get("result", "*")
-    label, accent = RESULT_LABEL.get(result_str, ("GAME OVER", "#FFFFFF"))
-
-    # ── Card ──────────────────────────────────────────────────
-    CARD_W, CARD_H = 540, 300
-    cx = (BOARD_SIZE - CARD_W) // 2
-    cy = (BOARD_SIZE - CARD_H) // 2
-
-    card = Image.new("RGBA", (CARD_W, CARD_H), (12, 12, 12, 230))
-    im.paste(card, (cx, cy), card)
-
-    # Accent top strip
-    strip = Image.new("RGBA", (CARD_W, 8), (*_hex_to_rgb(accent), 255))
-    im.paste(strip, (cx, cy), strip)
-
-    draw = ImageDraw.Draw(im, "RGBA")
-
-    fn_result  = load_font(52, bold=True)
-    fn_crown   = load_font(44)
-    fn_name    = load_font(28, bold=True)
-    fn_detail  = load_font(21)
-
-    # Crown + result label
-    crown_txt  = "♛ " + label
-    bbox       = draw.textbbox((0, 0), crown_txt, font=fn_result)
-    tw         = bbox[2] - bbox[0]
-    draw.text((cx + (CARD_W - tw) // 2, cy + 22), crown_txt,
-              font=fn_result, fill=accent)
-
-    # Thin divider
-    div_y = cy + 95
-    draw.line([(cx + 30, div_y), (cx + CARD_W - 30, div_y)],
-              fill=(80, 80, 80, 200), width=1)
-
-    # Legend name
-    legend_txt = meta["legend_name"]
-    bbox       = draw.textbbox((0, 0), legend_txt, font=fn_name)
-    tw         = bbox[2] - bbox[0]
-    draw.text((cx + (CARD_W - tw) // 2, cy + 112),
-              legend_txt, font=fn_name, fill="#FFD700")
-
-    # "vs opponent"
-    side     = "White" if meta["legend_color"] == chess.WHITE else "Black"
-    opponent = meta["black"] if meta["legend_color"] == chess.WHITE else meta["white"]
-    vs_txt   = f"vs {opponent}  ·  {side}"
-    bbox     = draw.textbbox((0, 0), vs_txt, font=fn_detail)
-    tw       = bbox[2] - bbox[0]
-    draw.text((cx + (CARD_W - tw) // 2, cy + 158),
-              vs_txt, font=fn_detail, fill="#CCCCCC")
-
-    # Event · Year
-    event    = meta.get("event") or ""
-    year     = (meta.get("date") or "").split(".")[0]
-    eco      = meta.get("eco") or ""
-    evt_txt  = "  ·  ".join(filter(None, [event, year, eco]))
-    if evt_txt:
-        bbox = draw.textbbox((0, 0), evt_txt, font=fn_detail)
-        tw   = bbox[2] - bbox[0]
-        draw.text((cx + (CARD_W - tw) // 2, cy + 192),
-                  evt_txt, font=fn_detail, fill="#888888")
-
-    # "Game Over" footer line
-    footer = "— Game Over —"
-    bbox   = draw.textbbox((0, 0), footer, font=fn_detail)
-    tw     = bbox[2] - bbox[0]
-    draw.text((cx + (CARD_W - tw) // 2, cy + CARD_H - 38),
-              footer, font=fn_detail, fill=(80, 80, 80, 200))
-
-    return im.convert("RGB")
-
-
-def _hex_to_rgb(hex_color):
-    h = hex_color.lstrip("#")
-    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-
-
 def create_legend_intro_frame(meta, img_path, board):
     """
     Cinematic intro frame: darkened initial board with a centred legend card
@@ -690,9 +579,6 @@ def save_frames(game, moves, meta, img_path):
     board       = game.board()
     total_moves = len(moves)
 
-    # Frames per move — supports fractional seconds (e.g. MOVE_SEC = 0.5)
-    move_frames = max(1, round(FPS * MOVE_SEC))
-
     # 1 ── Legend intro card ───────────────────────────────────
     print("[frames] Rendering intro card...")
     save_n(create_legend_intro_frame(meta, img_path, board), FPS * INTRO_SEC)
@@ -701,22 +587,17 @@ def save_frames(game, moves, meta, img_path):
     save_n(create_game_frame(board, None, meta, 0, total_moves), FPS * LEGEND_CARD_SEC)
 
     # 3 ── Move replay ─────────────────────────────────────────
-    print(f"[frames] Replaying {total_moves} moves at {MOVE_SEC}s/move "
-          f"({move_frames} frames/move)...")
+    print(f"[frames] Replaying {total_moves} moves...")
     last_move = None
     for i, move in enumerate(moves):
         board.push(move)
         last_move = move
         im = create_game_frame(board, move, meta, i + 1, total_moves)
-        save_n(im, move_frames)
+        save_n(im, FPS * MOVE_SEC)
         if (i + 1) % 10 == 0:
             print(f"[frames]   ... {i + 1}/{total_moves}")
 
-    # 4 ── Endgame card ────────────────────────────────────────
-    print("[frames] Rendering endgame card...")
-    save_n(create_endgame_card(meta, board), FPS * ENDGAME_SEC)
-
-    # 5 ── Final pause (last board position) ───────────────────
+    # 4 ── Final pause ─────────────────────────────────────────
     save_n(create_game_frame(board, last_move, meta, total_moves, total_moves),
            FPS * FINAL_SEC)
 
