@@ -70,7 +70,7 @@ AUDIO_BITRATE = "192k"
 
 # ── Social Media ────────────────────────────────
 POST_TO_SOCIAL   = True   # Set False to skip social posting
-PUBLIC_BASE_URL  = "https://roynek.com/Chess_Sol_Puzzles/auto_post_legends"
+PUBLIC_BASE_URL  = "https://roynek.com/Chess_Sol_Puzzles/meme_video_maker/output_videos/"
 GAME_LINK        = "https://roynek.com/Chess_Sol_Puzzles/public/"
 FACEBOOK_AREA_ID = "6"
 X_AREA_ID        = "21"
