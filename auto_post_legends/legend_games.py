@@ -904,6 +904,23 @@ print("\n[main] Encoding video...")
 encode_video(intro_file=intro_file)
 
 # ── Social copy ────────────────────────────────────────────────
+
+# rotation = [
+#     CHESS_LOCATION_PRESETS["india_south"],
+#     CHESS_LOCATION_PRESETS["us_chess"],
+#     CHESS_LOCATION_PRESETS["norway"],
+#     CHESS_LOCATION_PRESETS["russia"],
+#     CHESS_LOCATION_PRESETS["china_east"],
+#     CHESS_LOCATION_PRESETS["global"],   # None → no tag, pure hashtag reach
+# ]
+
+# for i, post_data in enumerate(today_posts):
+#     uploader.upload_video_from_url_to_reel_production(
+#         video_url   = post_data["url"],
+#         description = post_data["caption"],
+#         location    = rotation[i % len(rotation)],
+#     )
+
 opponent    = meta["black"] if meta["legend_color"] == chess.WHITE else meta["white"]
 msg         = random.choice(MESSAGES).format(legend=meta["legend_name"], opponent=opponent)
 tags        = " ".join(random.sample(HASHTAGS, 4))
