@@ -30,7 +30,7 @@ MAX_RESELECT    = 20    # max legend candidates to try per run
 #   0.5  → fast      (default, good for most games)
 #   1.0  → normal    (comfortable to follow)
 #   2.0  → slow      (study / educational pace)
-MOVE_SEC        = 0.5
+MOVE_SEC        = 1
 
 TEMP_DIR        = "frames"
 OUTPUT_VIDEO    = "output_video/legendary_game.mp4"
@@ -51,7 +51,7 @@ INTRO_AUDIO_DIR = random.choice(ls)
 # ── Background & Click Audio ──────────────────────────────────
 BACKGROUND_MUSIC = "bg_music_free.wav"
 CLICK_SOUND      = "move.mp3"
-BG_MUSIC_VOLUME  = 0.15
+BG_MUSIC_VOLUME  = 0.35
 CLICK_VOLUME     = 0.65
 INCLUDE_BG_MUSIC = True
 
@@ -69,6 +69,20 @@ HASHTAGS = [
     "#Checkmate", "#ChessLife", "#BoardGames", "#ChessIsLife",
     "#ChessTactics", "#ChessCommunity", "#ChessPlayer"
 ]
+
+# ── Call-To-Action (Follow Us) ───────────────────────────────
+# Shown on the endgame card and throughout the final pause.
+# Customise these to match your page/brand.
+CTA_ENABLED      = True
+CTA_PAGE_NAME    = "ChessSol"                        # your page / handle name
+CTA_PLATFORM     = "Facebook & Reels"                # shown as sub-line
+CTA_MAIN_TEXT    = "Follow {page} for daily chess!"  # {page} → CTA_PAGE_NAME
+CTA_SUB_TEXT     = "New legendary game every day  ♟"
+CTA_ICON         = "♛"                               # icon shown left of main text
+CTA_BG_COLOR     = (20, 20, 20, 210)                 # RGBA background of banner
+CTA_ACCENT_COLOR = "#FFD700"                         # gold — matches brand
+CTA_TEXT_COLOR   = "#FFFFFF"
+CTA_SUB_COLOR    = "#AAAAAA"
 
 # ─────────────────────────────────────────────
 #  UTILITIES
@@ -480,6 +494,86 @@ def draw_bottom_bar(im, meta):
 ENDGAME_SEC     = 4     # how long the endgame card is shown
 
 
+# ─────────────────────────────────────────────
+#  CALL-TO-ACTION BANNER
+# ─────────────────────────────────────────────
+
+def draw_cta_banner(im, compact=False):
+    """
+    Paste a "Follow Us" CTA banner onto the bottom of a PIL Image.
+
+    compact=False → full two-line banner (used on endgame card)
+    compact=True  → single slimmer line (used during final pause)
+
+    The banner sits flush at the bottom of the frame, above the
+    bottom info bar when compact=True, or as a standalone block
+    when used on the endgame card.
+    """
+    if not CTA_ENABLED:
+        return im
+
+    im   = im.convert("RGBA")
+    draw = ImageDraw.Draw(im, "RGBA")
+
+    main_text = CTA_MAIN_TEXT.format(page=CTA_PAGE_NAME)
+
+    if compact:
+        # ── Single-line slim bar ───────────────────────────────
+        BAR_H  = 48
+        bar_y  = BOARD_SIZE - BAR_H
+        bar    = Image.new("RGBA", (BOARD_SIZE, BAR_H), CTA_BG_COLOR)
+        im.paste(bar, (0, bar_y), bar)
+        draw   = ImageDraw.Draw(im, "RGBA")
+
+        fn     = load_font(22, bold=True)
+        fn_sm  = load_font(18)
+
+        # Accent left stripe
+        stripe = Image.new("RGBA", (5, BAR_H), (*_hex_to_rgb(CTA_ACCENT_COLOR), 255))
+        im.paste(stripe, (0, bar_y), stripe)
+
+        # Icon + main text
+        full_txt = f"  {CTA_ICON}  {main_text}"
+        draw.text((10, bar_y + 6), full_txt, font=fn, fill=CTA_TEXT_COLOR)
+
+        # Sub text right-aligned
+        bbox = draw.textbbox((0, 0), CTA_SUB_TEXT, font=fn_sm)
+        tw   = bbox[2] - bbox[0]
+        draw.text((BOARD_SIZE - tw - 12, bar_y + 10),
+                  CTA_SUB_TEXT, font=fn_sm, fill=CTA_SUB_COLOR)
+
+    else:
+        # ── Full two-line prominent banner ────────────────────
+        BAR_H  = 72
+        bar_y  = BOARD_SIZE - BAR_H
+        bar    = Image.new("RGBA", (BOARD_SIZE, BAR_H), CTA_BG_COLOR)
+        im.paste(bar, (0, bar_y), bar)
+
+        # Accent top border line
+        border = Image.new("RGBA", (BOARD_SIZE, 3),
+                           (*_hex_to_rgb(CTA_ACCENT_COLOR), 255))
+        im.paste(border, (0, bar_y), border)
+
+        draw  = ImageDraw.Draw(im, "RGBA")
+        fn_lg = load_font(28, bold=True)
+        fn_sm = load_font(20)
+
+        # Icon + main text (centred)
+        full_txt = f"{CTA_ICON}  {main_text}"
+        bbox     = draw.textbbox((0, 0), full_txt, font=fn_lg)
+        tw       = bbox[2] - bbox[0]
+        draw.text(((BOARD_SIZE - tw) // 2, bar_y + 8),
+                  full_txt, font=fn_lg, fill=CTA_ACCENT_COLOR)
+
+        # Sub text (centred)
+        bbox = draw.textbbox((0, 0), CTA_SUB_TEXT, font=fn_sm)
+        tw   = bbox[2] - bbox[0]
+        draw.text(((BOARD_SIZE - tw) // 2, bar_y + 44),
+                  CTA_SUB_TEXT, font=fn_sm, fill=CTA_SUB_COLOR)
+
+    return im.convert("RGB")
+
+
 RESULT_LABEL = {
     "1-0":     ("WHITE WINS", "#FFD700"),
     "0-1":     ("BLACK WINS", "#3498DB"),
@@ -572,7 +666,10 @@ def create_endgame_card(meta, board):
     draw.text((cx + (CARD_W - tw) // 2, cy + CARD_H - 38),
               footer, font=fn_detail, fill=(80, 80, 80, 200))
 
-    return im.convert("RGB")
+    # ── CTA banner (full, prominent) ──────────────────────────
+    im = draw_cta_banner(im.convert("RGB"), compact=False)
+
+    return im
 
 
 def _hex_to_rgb(hex_color):
@@ -647,7 +744,8 @@ def create_legend_intro_frame(meta, img_path, board):
     opponent = meta["black"] if meta["legend_color"] == chess.WHITE else meta["white"]
 
     draw.text((tx, ty),      meta["legend_name"], font=fn_title, fill="#FFD700")
-    draw.text((tx, ty + 50), "\u265b Chess Legend",   font=fn_sub,   fill="#AAAAAA")
+    # draw.text((tx, ty + 50), "\u265b Chess Legend",   font=fn_sub,   fill="#AAAAAA")
+    draw.text((tx, ty + 50), "Chess Legend",   font=fn_sub,   fill="#AAAAAA")
 
     lines = [
         f"vs {opponent}",
@@ -716,9 +814,10 @@ def save_frames(game, moves, meta, img_path):
     print("[frames] Rendering endgame card...")
     save_n(create_endgame_card(meta, board), FPS * ENDGAME_SEC)
 
-    # 5 ── Final pause (last board position) ───────────────────
-    save_n(create_game_frame(board, last_move, meta, total_moves, total_moves),
-           FPS * FINAL_SEC)
+    # 5 ── Final pause (last board + compact CTA) ─────────────
+    final_im = create_game_frame(board, last_move, meta, total_moves, total_moves)
+    final_im = draw_cta_banner(final_im, compact=True)
+    save_n(final_im, FPS * FINAL_SEC)
 
     print(f"[frames] Total frames: {frame_count}")
 
@@ -812,7 +911,7 @@ safe_msg    = f"{msg} {tags}".encode("ascii", "ignore").decode().strip()
 
 print(f"\n📢  Social copy:\n{safe_msg}\n")
 
-video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
+video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post_legends/{OUTPUT_VIDEO}"
 game_link = "https://roynek.com/Chess_Sol_Puzzles/public/"
 
 output = send_to_social_media_api(

@@ -32,3 +32,8 @@ meme_video_maker/fb_cookies.json
 */fb_cookies.json
 
 meme_video_maker/venv
+
+auto_post_legends/output_video/*
+
+meme_video_maker/output_videos/*
+meme_video_maker/output_videos/meme_video.mp4
