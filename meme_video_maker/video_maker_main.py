@@ -2,25 +2,25 @@
 Chess Meme Video Maker — Pro Edition
 =====================================
 Modes:
-  - "combined"    : Memes on top, Joker video on bottom (original style)
+  - "combined"    : Memes on top, Joker video on bottom
   - "memes_only"  : Full-screen meme slideshow with background music
   - "joker_only"  : Just the Joker video, resized to canvas
 
-Features:
-  - No duplicate memes within a single video
-  - Ken Burns pan/zoom effect on memes (fixed for moviepy compatibility)
-  - Background music support (memes_only mode)
-  - Configurable split ratio, canvas size, durations
-  - Auto-skip already exported videos (crash-safe batch)
-  - Social media posting to Facebook and X after export
+Memory-safe for low-RAM servers:
+  - Each meme clip is pre-rendered to a temp file on disk
+  - Final assembly reads from disk, not RAM
+  - Temp files are cleaned up automatically
 """
 
 import os
 import json
 import random
+import shutil
+import tempfile
+import subprocess
 import numpy as np
 import requests
-from PIL import Image as PILImage
+from PIL import Image as PILImage, ImageDraw, ImageFont
 from moviepy import (
     VideoFileClip,
     ImageClip,
@@ -29,6 +29,7 @@ from moviepy import (
     clips_array,
     AudioFileClip,
     concatenate_audioclips,
+    concatenate_videoclips,
 )
 
 # ─────────────────────────────────────────────
@@ -37,40 +38,45 @@ from moviepy import (
 
 MODE = "combined"  # "combined" | "memes_only" | "joker_only"
 
-# Canvas dimensions (portrait 9:16 by default)
-CANVAS_W = 1080
-CANVAS_H = 1920
+CANVAS_W    = 1080
+CANVAS_H    = 1920
+SPLIT_RATIO = 0.5   # 0.5 = 50/50 top/bottom in combined mode
 
-# Split ratio for "combined" mode (0.5 = 50/50, 0.4 = memes get 40%)
-SPLIT_RATIO = 0.5
+VIDEO_PATH = "merged_joker_trimmed.mp4"
+MEME_DIR   = "downloaded_memes"
+MUSIC_DIR  = "bg_music"
 
-# Paths
-VIDEO_PATH    = "merged_joker_trimmed.mp4"
-MEME_DIR      = "downloaded_memes"
-MUSIC_DIR     = "bg_music"   # Used in memes_only mode
-
-# Output
 OUTPUT_DIR    = "output_videos"
-OUTPUT_NAME   = "meme_video.mp4"  # Single output filename (used for social URL too)
-SKIP_EXISTING = True              # Skip render if file already exists
+OUTPUT_NAME   = "meme_video.mp4"
+SKIP_EXISTING = False   # Set True to skip render if file already exists
 
-# Meme display duration range (seconds)
 MEME_DURATION_MIN = 5
 MEME_DURATION_MAX = 9
 
-# Ken Burns effect: subtle zoom/pan on memes
 KEN_BURNS_ENABLED  = True
-KEN_BURNS_ZOOM_MIN = 1.0    # Start zoom (1.0 = no zoom)
-KEN_BURNS_ZOOM_MAX = 1.08   # Max zoom reached by end of clip
+KEN_BURNS_ZOOM_MIN = 1.0
+KEN_BURNS_ZOOM_MAX = 1.06   # Kept low to reduce per-frame work
 
-# Video export settings
+# Engagement overlay — shown on meme panel
+ENGAGEMENT_OVERLAY_ENABLED = True
+ENGAGEMENT_TEXTS = [
+    "👍 Like if you felt this!",
+    "🔁 Share with your chess buddy!",
+    "♟️ Tag someone who needs this!",
+    "😂 Like & share for more!",
+    "❤️ Double tap if you agree!",
+    "🔥 Share this with a chess player!",
+    "👇 Tag your opponent!",
+    "💬 Comment your reaction!",
+]
+
 FPS           = 24
 VIDEO_CODEC   = "libx264"
 AUDIO_BITRATE = "192k"
 
 # ── Social Media ────────────────────────────────
-POST_TO_SOCIAL   = True   # Set False to skip social posting
-PUBLIC_BASE_URL  = "https://roynek.com/Chess_Sol_Puzzles/meme_video_maker/output_videos/"
+POST_TO_SOCIAL   = True
+PUBLIC_BASE_URL  = "https://roynek.com/Chess_Sol_Puzzles/meme_video_maker/output_videos"
 GAME_LINK        = "https://roynek.com/Chess_Sol_Puzzles/public/"
 FACEBOOK_AREA_ID = "6"
 X_AREA_ID        = "21"
@@ -94,7 +100,6 @@ HASHTAGS = [
 # ─────────────────────────────────────────────
 
 def list_files(directory, extensions):
-    """Return sorted full paths of files with given extensions."""
     if not os.path.isdir(directory):
         return []
     return sorted([
@@ -104,27 +109,66 @@ def list_files(directory, extensions):
     ])
 
 
+def add_engagement_overlay(img_array, text, canvas_w, canvas_h):
+    """
+    Burn an engagement text label onto the bottom of a numpy image array.
+    Uses a semi-transparent dark pill/bar so it's readable on any meme.
+    """
+    pil = PILImage.fromarray(img_array).convert("RGBA")
+
+    # Draw layer
+    overlay = PILImage.new("RGBA", pil.size, (0, 0, 0, 0))
+    draw    = ImageDraw.Draw(overlay)
+
+    # Try to load a bold font, fall back gracefully
+    font_size = max(28, canvas_w // 28)
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+    except Exception:
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", font_size)
+        except Exception:
+            font = ImageFont.load_default()
+
+    # Measure text
+    bbox    = draw.textbbox((0, 0), text, font=font)
+    tw, th  = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    padding = font_size // 2
+    bar_h   = th + padding * 2
+    bar_y   = canvas_h - bar_h - int(canvas_h * 0.04)  # 4% from bottom
+
+    # Semi-transparent dark background bar
+    draw.rectangle(
+        [(0, bar_y), (canvas_w, bar_y + bar_h)],
+        fill=(0, 0, 0, 170)
+    )
+
+    # Centered white text
+    tx = (canvas_w - tw) // 2
+    ty = bar_y + padding
+    draw.text((tx, ty), text, font=font, fill=(255, 255, 255, 255))
+
+    # Merge back
+    combined = PILImage.alpha_composite(pil, overlay).convert("RGB")
+    return np.array(combined)
+
+
 def apply_ken_burns(img_array, duration):
     """
-    Given a numpy image array, returns a VideoClip with a Ken Burns
-    zoom+pan effect over `duration` seconds.
-
-    Uses VideoClip(make_frame) — the correct moviepy approach for
-    frame-by-frame manipulation, avoiding .transform() API issues.
+    Returns a VideoClip with Ken Burns zoom+pan over `duration` seconds.
+    Built with VideoClip(make_frame) to avoid .transform() memory issues.
     """
     zoom_start = random.uniform(KEN_BURNS_ZOOM_MIN, KEN_BURNS_ZOOM_MAX)
     zoom_end   = random.uniform(KEN_BURNS_ZOOM_MIN, KEN_BURNS_ZOOM_MAX)
     pan_x      = random.choice([-1, 0, 1])
     pan_y      = random.choice([-1, 0, 1])
-
     src_h, src_w = img_array.shape[:2]
 
     def make_frame(t):
         progress = t / duration if duration > 0 else 0
         zoom     = zoom_start + (zoom_end - zoom_start) * progress
-
-        new_w = int(src_w * zoom)
-        new_h = int(src_h * zoom)
+        new_w    = int(src_w * zoom)
+        new_h    = int(src_h * zoom)
 
         pil   = PILImage.fromarray(img_array).resize((new_w, new_h), PILImage.LANCZOS)
         frame = np.array(pil)
@@ -141,46 +185,64 @@ def apply_ken_burns(img_array, duration):
     return VideoClip(make_frame, duration=duration)
 
 
-def make_meme_clip(meme_path, start_time, duration, canvas_w, canvas_h):
+def render_single_meme_to_file(meme_path, duration, canvas_w, canvas_h, tmp_dir, index):
     """
-    Load a meme image, fit it into canvas_w x canvas_h (letterboxed),
-    optionally apply Ken Burns, and return a timed clip.
+    Render one meme clip (with Ken Burns + optional overlay) to a temp .mp4 file.
+    This is the key memory fix: each clip is written to disk independently,
+    so RAM usage stays flat regardless of total video length.
     """
     img = ImageClip(meme_path)
 
     # Fit inside canvas preserving aspect ratio
-    scale  = min(canvas_w / img.w, canvas_h / img.h)
-    new_w  = int(img.w * scale)
-    new_h  = int(img.h * scale)
-    img    = img.resized(width=new_w, height=new_h)
+    scale = min(canvas_w / img.w, canvas_h / img.h)
+    new_w = int(img.w * scale)
+    new_h = int(img.h * scale)
+    img   = img.resized(width=new_w, height=new_h)
+    raw   = img.get_frame(0)
+
+    # Letterbox onto black canvas
+    canvas = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
+    y_off  = (canvas_h - new_h) // 2
+    x_off  = (canvas_w - new_w) // 2
+    canvas[y_off:y_off + new_h, x_off:x_off + new_w] = raw
+    framed = canvas
+
+    # Engagement overlay
+    if ENGAGEMENT_OVERLAY_ENABLED:
+        text   = random.choice(ENGAGEMENT_TEXTS)
+        framed = add_engagement_overlay(framed, text, canvas_w, canvas_h)
 
     if KEN_BURNS_ENABLED:
-        raw_frame  = img.get_frame(0)
-        inner_clip = apply_ken_burns(raw_frame, duration)
+        clip = apply_ken_burns(framed, duration)
     else:
-        inner_clip = img
+        clip = ImageClip(framed).with_duration(duration)
 
-    clip = (
-        CompositeVideoClip(
-            [inner_clip.with_position("center")],
-            size=(canvas_w, canvas_h),
-            bg_color=(0, 0, 0),
-        )
-        .with_start(start_time)
-        .with_duration(duration)
+    tmp_path = os.path.join(tmp_dir, f"meme_{index:04d}.mp4")
+    clip.write_videofile(
+        tmp_path,
+        codec=VIDEO_CODEC,
+        fps=FPS,
+        audio=False,
+        logger=None,   # Suppress per-clip noise
     )
-    return clip
+    return tmp_path
 
 
-def build_meme_timeline(memes, duration, canvas_w, canvas_h):
+def build_meme_timeline_disk(memes, duration, canvas_w, canvas_h):
     """
-    Build a full meme slideshow covering `duration` seconds.
-    Memes play in shuffled order with no back-to-back repeats.
+    Build a meme slideshow by rendering each clip to disk first,
+    then concatenating. Keeps RAM usage low on constrained servers.
+    Returns a VideoClip ready to composite.
     """
-    queue        = memes.copy()
+    tmp_dir = tempfile.mkdtemp(prefix="chess_memes_")
+    print(f"  🗂️  Temp dir: {tmp_dir}")
+
+    queue = memes.copy()
     random.shuffle(queue)
-    clips        = []
+
+    segments     = []   # (tmp_file_path, duration)
     current_time = 0.0
+    index        = 0
 
     while current_time < duration:
         if not queue:
@@ -193,18 +255,39 @@ def build_meme_timeline(memes, duration, canvas_w, canvas_h):
             duration - current_time,
         )
 
-        clip = make_meme_clip(meme_path, current_time, meme_dur, canvas_w, canvas_h)
-        clips.append(clip)
+        print(f"  🖼️  Clip {index + 1}: {os.path.basename(meme_path)} ({meme_dur:.1f}s)")
+        tmp_path = render_single_meme_to_file(
+            meme_path, meme_dur, canvas_w, canvas_h, tmp_dir, index
+        )
+        segments.append(tmp_path)
         current_time += meme_dur
+        index        += 1
 
-    return CompositeVideoClip(clips, size=(canvas_w, canvas_h)).with_duration(duration)
+    # Concatenate all rendered clips
+    print(f"\n  🔗 Concatenating {len(segments)} meme clips...")
+    clips    = [VideoFileClip(p) for p in segments]
+    timeline = concatenate_videoclips(clips)
+
+    # Store tmp_dir reference so we can clean up after export
+    timeline._chess_tmp_dir = tmp_dir
+    timeline._chess_tmp_clips = clips
+    return timeline
+
+
+def cleanup_timeline(timeline):
+    """Close clips and remove temp dir after export."""
+    for c in getattr(timeline, "_chess_tmp_clips", []):
+        try:
+            c.close()
+        except Exception:
+            pass
+    tmp_dir = getattr(timeline, "_chess_tmp_dir", None)
+    if tmp_dir and os.path.isdir(tmp_dir):
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        print(f"  🧹 Cleaned up temp dir: {tmp_dir}")
 
 
 def build_background_music(music_files, duration):
-    """
-    Shuffle and concatenate music tracks to fill `duration` seconds.
-    Returns an audio clip or None if no music is available.
-    """
     if not music_files:
         print("  ⚠️  No music files found. Exporting without audio.")
         return None
@@ -225,6 +308,14 @@ def build_background_music(music_files, duration):
         total += track.duration
 
     return concatenate_audioclips(audio_clips)
+
+
+def cleanup_output():
+    """Delete the exported video from OUTPUT_DIR after posting."""
+    target = os.path.join(OUTPUT_DIR, OUTPUT_NAME)
+    if os.path.isfile(target):
+        os.remove(target)
+        print(f"  🗑️  Deleted output video: {target}")
 
 
 # ─────────────────────────────────────────────
@@ -254,7 +345,6 @@ def send_to_social_media_api(platform, link, text, media=None, area=None,
 
 
 def post_video(video_filename):
-    """Build caption and post the exported video to Facebook and X."""
     msg     = random.choice(MESSAGES)
     tags    = " ".join(random.sample(HASHTAGS, 4))
     caption = f"{msg} {tags}".encode("ascii", "ignore").decode().strip()
@@ -263,7 +353,7 @@ def post_video(video_filename):
     print(f"\n📢  Caption:\n{caption}")
     print(f"🔗  Video URL: {video_url}\n")
 
-    print("📘 Posting to Facebook...")
+    print("📘 Posting to Facebook Reels...")
     fb_resp = send_to_social_media_api(
         platform="facebook",
         link=GAME_LINK,
@@ -274,15 +364,15 @@ def post_video(video_filename):
     )
     print("Facebook response:", fb_resp)
 
-    # print("\n🐦 Posting to X...")
-    # x_resp = send_to_social_media_api(
-    #     platform="x",
-    #     link=GAME_LINK,
-    #     text=caption,
-    #     media=video_url,
-    #     area=X_AREA_ID,
-    # )
-    # print("X response:", x_resp)
+    print("\n🐦 Posting to X...")
+    x_resp = send_to_social_media_api(
+        platform="x",
+        link=GAME_LINK,
+        text=caption,
+        media=video_url,
+        area=X_AREA_ID,
+    )
+    print("X response:", x_resp)
 
 
 # ─────────────────────────────────────────────
@@ -317,57 +407,66 @@ def main():
         print(f"⏭️  Video already exists: {output_path}. Skipping render.")
     else:
         print(f"🎬 Rendering → {output_path}\n")
+        meme_timeline = None
 
-        if MODE == "combined":
-            top_h    = int(CANVAS_H * SPLIT_RATIO)
-            bot_h    = CANVAS_H - top_h
-            joker    = base_joker.resized(width=CANVAS_W, height=bot_h)
-            duration = joker.duration
+        try:
+            if MODE == "combined":
+                top_h    = int(CANVAS_H * SPLIT_RATIO)
+                bot_h    = CANVAS_H - top_h
+                joker    = base_joker.resized(width=CANVAS_W, height=bot_h)
+                duration = joker.duration
 
-            num_memes     = min(len(all_memes), max(12, int(duration / MEME_DURATION_MIN)))
-            memes         = random.sample(all_memes, num_memes)
-            meme_timeline = build_meme_timeline(memes, duration, CANVAS_W, top_h)
-            final         = clips_array([[meme_timeline], [joker]])
-            final.write_videofile(
-                output_path, codec=VIDEO_CODEC, fps=FPS,
-                audio=True, audio_bitrate=AUDIO_BITRATE,
-            )
+                num_memes     = min(len(all_memes), max(12, int(duration / MEME_DURATION_MIN)))
+                memes         = random.sample(all_memes, num_memes)
+                meme_timeline = build_meme_timeline_disk(memes, duration, CANVAS_W, top_h)
+                final         = clips_array([[meme_timeline], [joker]])
+                final.write_videofile(
+                    output_path, codec=VIDEO_CODEC, fps=FPS,
+                    audio=True, audio_bitrate=AUDIO_BITRATE,
+                )
 
-        elif MODE == "memes_only":
-            if music_files:
-                probe    = AudioFileClip(random.choice(music_files))
-                duration = probe.duration
-                probe.close()
-            else:
-                duration = 60.0
+            elif MODE == "memes_only":
+                if music_files:
+                    probe    = AudioFileClip(random.choice(music_files))
+                    duration = probe.duration
+                    probe.close()
+                else:
+                    duration = 60.0
 
-            num_memes     = min(len(all_memes), max(8, int(duration / MEME_DURATION_MIN)))
-            memes         = random.sample(all_memes, num_memes)
-            meme_timeline = build_meme_timeline(memes, duration, CANVAS_W, CANVAS_H)
+                num_memes     = min(len(all_memes), max(8, int(duration / MEME_DURATION_MIN)))
+                memes         = random.sample(all_memes, num_memes)
+                meme_timeline = build_meme_timeline_disk(memes, duration, CANVAS_W, CANVAS_H)
 
-            music = build_background_music(music_files, duration)
-            if music:
-                meme_timeline = meme_timeline.with_audio(music)
+                music = build_background_music(music_files, duration)
+                if music:
+                    meme_timeline = meme_timeline.with_audio(music)
 
-            meme_timeline.write_videofile(
-                output_path, codec=VIDEO_CODEC, fps=FPS,
-                audio=bool(music), audio_bitrate=AUDIO_BITRATE,
-            )
+                meme_timeline.write_videofile(
+                    output_path, codec=VIDEO_CODEC, fps=FPS,
+                    audio=bool(music), audio_bitrate=AUDIO_BITRATE,
+                )
 
-        elif MODE == "joker_only":
-            joker = base_joker.resized(width=CANVAS_W, height=CANVAS_H)
-            joker.write_videofile(
-                output_path, codec=VIDEO_CODEC, fps=FPS,
-                audio=True, audio_bitrate=AUDIO_BITRATE,
-            )
+            elif MODE == "joker_only":
+                joker = base_joker.resized(width=CANVAS_W, height=CANVAS_H)
+                joker.write_videofile(
+                    output_path, codec=VIDEO_CODEC, fps=FPS,
+                    audio=True, audio_bitrate=AUDIO_BITRATE,
+                )
+
+        finally:
+            # Always clean up temp clips, even if export fails
+            if meme_timeline is not None:
+                cleanup_timeline(meme_timeline)
 
         print(f"\n✅ Video saved: {output_path}")
 
-    # Post to social media
-    # if POST_TO_SOCIAL:
-    #     post_video(OUTPUT_NAME)
-    # else:
-    #     print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
+    # ── Post to social media ────────────────────────────────
+    if POST_TO_SOCIAL:
+        post_video(OUTPUT_NAME)
+        # Uncomment to delete video from server after posting:
+        # cleanup_output()
+    else:
+        print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
 
     print("\n🏁 Done!")
 
