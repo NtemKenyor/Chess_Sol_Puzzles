@@ -30,7 +30,7 @@ MAX_RESELECT    = 20    # max legend candidates to try per run
 #   0.5  → fast      (default, good for most games)
 #   1.0  → normal    (comfortable to follow)
 #   2.0  → slow      (study / educational pace)
-MOVE_SEC        = 1
+MOVE_SEC        = 1.5
 
 TEMP_DIR        = "frames"
 OUTPUT_VIDEO    = "output_video/legendary_game.mp4"
@@ -51,7 +51,7 @@ INTRO_AUDIO_DIR = random.choice(ls)
 # ── Background & Click Audio ──────────────────────────────────
 BACKGROUND_MUSIC = "bg_music_free.wav"
 CLICK_SOUND      = "move.mp3"
-BG_MUSIC_VOLUME  = 0.35
+BG_MUSIC_VOLUME  = 0.45
 CLICK_VOLUME     = 0.65
 INCLUDE_BG_MUSIC = True
 
@@ -935,13 +935,14 @@ output = send_to_social_media_api(
     platform='facebook', link=game_link, text=safe_msg,
     media=video_url, area='6', fb_post_to="reels"
 )
+# fb_post_to="reels"
 print("Facebook API Response:", output)
 
-output_x = send_to_social_media_api(
-    platform='x', link=game_link, text=safe_msg,
-    media=video_url, area='21'
-)
-print("X API Response:", output_x)
+# output_x = send_to_social_media_api(
+#     platform='x', link=game_link, text=safe_msg,
+#     media=video_url, area='21'
+# )
+# print("X API Response:", output_x)
 
 # ── Cleanup ────────────────────────────────────────────────────
 for f in os.listdir(TEMP_DIR):
