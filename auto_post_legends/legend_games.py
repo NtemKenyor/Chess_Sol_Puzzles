@@ -123,11 +123,11 @@ def pick_intro_audio():
 
 
 def send_to_social_media_api(platform, link, text, media=None, area=None,
-                              x_comm_id=None, fb_post_to=None):
+                              x_comm_id=None, fb_post_to=None, location=None):
     api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
     payload = {
         'link_2_post': link, 'message': text, 'media': media,
-        'pages_ordered_ids': area, 'comm_id': x_comm_id, 'post_to': fb_post_to
+        'pages_ordered_ids': area, 'comm_id': x_comm_id, 'post_to': fb_post_to, 'location': location
     }
     headers = {'Content-Type': 'application/json'}
     print(json.dumps(payload, ensure_ascii=False))
@@ -925,15 +925,17 @@ opponent    = meta["black"] if meta["legend_color"] == chess.WHITE else meta["wh
 msg         = random.choice(MESSAGES).format(legend=meta["legend_name"], opponent=opponent)
 tags        = " ".join(random.sample(HASHTAGS, 4))
 safe_msg    = f"{msg} {tags}".encode("ascii", "ignore").decode().strip()
+location = "us_chess"
 
 print(f"\n📢  Social copy:\n{safe_msg}\n")
 
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post_legends/{OUTPUT_VIDEO}"
-game_link = "https://roynek.com/Chess_Sol_Puzzles/public/"
+# game_link = "https://roynek.com/Chess_Sol_Puzzles/public/"
+game_link = ""
 
 output = send_to_social_media_api(
     platform='facebook', link=game_link, text=safe_msg,
-    media=video_url, area='6', fb_post_to="reels"
+    media=video_url, area='6', fb_post_to="reels", location=location
 )
 # fb_post_to="reels"
 print("Facebook API Response:", output)
