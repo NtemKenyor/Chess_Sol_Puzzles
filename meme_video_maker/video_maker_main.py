@@ -185,27 +185,71 @@ def apply_ken_burns(img_array, duration):
     return VideoClip(make_frame, duration=duration)
 
 
+# def render_single_meme_to_file(meme_path, duration, canvas_w, canvas_h, tmp_dir, index):
+#     """
+#     Render one meme clip (with Ken Burns + optional overlay) to a temp .mp4 file.
+#     This is the key memory fix: each clip is written to disk independently,
+#     so RAM usage stays flat regardless of total video length.
+#     """
+#     img = ImageClip(meme_path)
+
+#     # Fit inside canvas preserving aspect ratio
+#     scale = min(canvas_w / img.w, canvas_h / img.h)
+#     new_w = int(img.w * scale)
+#     new_h = int(img.h * scale)
+#     img   = img.resized(width=new_w, height=new_h)
+#     raw   = img.get_frame(0)
+
+#     # Letterbox onto black canvas
+#     canvas = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
+#     y_off  = (canvas_h - new_h) // 2
+#     x_off  = (canvas_w - new_w) // 2
+#     canvas[y_off:y_off + new_h, x_off:x_off + new_w] = raw
+#     framed = canvas
+
+#     # Engagement overlay
+#     if ENGAGEMENT_OVERLAY_ENABLED:
+#         text   = random.choice(ENGAGEMENT_TEXTS)
+#         framed = add_engagement_overlay(framed, text, canvas_w, canvas_h)
+
+#     if KEN_BURNS_ENABLED:
+#         clip = apply_ken_burns(framed, duration)
+#     else:
+#         clip = ImageClip(framed).with_duration(duration)
+
+#     tmp_path = os.path.join(tmp_dir, f"meme_{index:04d}.mp4")
+#     clip.write_videofile(
+#         tmp_path,
+#         codec=VIDEO_CODEC,
+#         fps=FPS,
+#         audio=False,
+#         logger=None,   # Suppress per-clip noise
+#     )
+#     return tmp_path
+
 def render_single_meme_to_file(meme_path, duration, canvas_w, canvas_h, tmp_dir, index):
-    """
-    Render one meme clip (with Ken Burns + optional overlay) to a temp .mp4 file.
-    This is the key memory fix: each clip is written to disk independently,
-    so RAM usage stays flat regardless of total video length.
-    """
     img = ImageClip(meme_path)
 
-    # Fit inside canvas preserving aspect ratio
+    # 1. Fit inside canvas preserving aspect ratio
     scale = min(canvas_w / img.w, canvas_h / img.h)
     new_w = int(img.w * scale)
     new_h = int(img.h * scale)
     img   = img.resized(width=new_w, height=new_h)
     raw   = img.get_frame(0)
 
-    # Letterbox onto black canvas
+    # 2. Letterbox onto black canvas
     canvas = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
-    y_off  = (canvas_h - new_h) // 2
-    x_off  = (canvas_w - new_w) // 2
-    canvas[y_off:y_off + new_h, x_off:x_off + new_w] = raw
-    framed = canvas
+    
+    # CALCULATE OFFSETS SAFELY
+    y_off  = (canvas_h - raw.shape[0]) // 2
+    x_off  = (canvas_w - raw.shape[1]) // 2
+    
+    # 3. Use the actual shape of 'raw' to avoid broadcast errors
+    canvas[y_off:y_off + raw.shape[0], x_off:x_off + raw.shape[1]] = raw
+    
+    # 4. FINAL SAFETY CHECK: Force the framed image to the exact canvas size
+    # This prevents the 1078 vs 1080 error
+    framed = np.array(PILImage.fromarray(canvas).resize((canvas_w, canvas_h)))
 
     # Engagement overlay
     if ENGAGEMENT_OVERLAY_ENABLED:
@@ -223,10 +267,9 @@ def render_single_meme_to_file(meme_path, duration, canvas_w, canvas_h, tmp_dir,
         codec=VIDEO_CODEC,
         fps=FPS,
         audio=False,
-        logger=None,   # Suppress per-clip noise
+        logger=None,
     )
     return tmp_path
-
 
 def build_meme_timeline_disk(memes, duration, canvas_w, canvas_h):
     """
@@ -461,12 +504,12 @@ def main():
         print(f"\n✅ Video saved: {output_path}")
 
     # ── Post to social media ────────────────────────────────
-    if POST_TO_SOCIAL:
-        post_video(OUTPUT_NAME)
-        # Uncomment to delete video from server after posting:
-        # cleanup_output()
-    else:
-        print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
+    # if POST_TO_SOCIAL:
+    #     post_video(OUTPUT_NAME)
+    #     # Uncomment to delete video from server after posting:
+    #     # cleanup_output()
+    # else:
+    #     print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
 
     print("\n🏁 Done!")
 
