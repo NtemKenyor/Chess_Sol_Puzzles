@@ -274,15 +274,15 @@ def post_video(video_filename):
     )
     print("Facebook response:", fb_resp)
 
-    print("\n🐦 Posting to X...")
-    x_resp = send_to_social_media_api(
-        platform="x",
-        link=GAME_LINK,
-        text=caption,
-        media=video_url,
-        area=X_AREA_ID,
-    )
-    print("X response:", x_resp)
+    # print("\n🐦 Posting to X...")
+    # x_resp = send_to_social_media_api(
+    #     platform="x",
+    #     link=GAME_LINK,
+    #     text=caption,
+    #     media=video_url,
+    #     area=X_AREA_ID,
+    # )
+    # print("X response:", x_resp)
 
 
 # ─────────────────────────────────────────────
@@ -364,10 +364,10 @@ def main():
         print(f"\n✅ Video saved: {output_path}")
 
     # Post to social media
-    if POST_TO_SOCIAL:
-        post_video(OUTPUT_NAME)
-    else:
-        print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
+    # if POST_TO_SOCIAL:
+    #     post_video(OUTPUT_NAME)
+    # else:
+    #     print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
 
     print("\n🏁 Done!")
 
