@@ -198,7 +198,16 @@ def load_meme_as_canvas(meme_path, canvas_w, canvas_h):
     canvas = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
     y_off  = (canvas_h - new_h) // 2
     x_off  = (canvas_w - new_w) // 2
-    canvas[y_off:y_off + new_h, x_off:x_off + new_w] = raw
+    # canvas[y_off:y_off + new_h, x_off:x_off + new_w] = raw
+
+    h, w = raw.shape[:2]
+
+    # 🔴 clamp to canvas bounds
+    h = min(h, canvas_h - y_off)
+    w = min(w, canvas_w - x_off)
+
+    canvas[y_off:y_off + h, x_off:x_off + w] = raw[:h, :w]
+
 
     if ENGAGEMENT_OVERLAY_ENABLED:
         canvas = add_engagement_overlay(canvas, random.choice(ENGAGEMENT_TEXTS), canvas_w, canvas_h)
@@ -318,7 +327,8 @@ def build_meme_timeline_ffmpeg(memes, duration, canvas_w, canvas_h):
 
     # Wipe leftover temp files
     for f in os.listdir(TEMP_DIR):
-        if f.endswith(".mp4") or f == "concat_list.txt":
+        # if f.endswith(".mp4") or f == "concat_list.txt":
+        if (f.startswith("meme_") and f.endswith(".mp4")) or f == "concat_list.txt":
             os.remove(os.path.join(TEMP_DIR, f))
 
     queue = memes.copy()
