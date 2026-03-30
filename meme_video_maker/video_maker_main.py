@@ -106,25 +106,29 @@ def list_files(directory, extensions):
     ])
 
 
-def find_ffmpeg():
-    """Return path to ffmpeg binary, trying common cPanel locations."""
-    for candidate in ["ffmpeg", "/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg",
-                      "/opt/cpanel/ea-php81/root/usr/bin/ffmpeg"]:
-        try:
-            result = subprocess.run(
-                [candidate, "-version"],
-                capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                return candidate
-        except FileNotFoundError:
-            continue
-    raise RuntimeError("ffmpeg not found. Install it or check PATH.")
+# def find_ffmpeg():
+#     """Return path to ffmpeg binary, trying common cPanel locations."""
+#     for candidate in ["ffmpeg", "/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg",
+#                       "/opt/cpanel/ea-php81/root/usr/bin/ffmpeg"]:
+#         try:
+#             result = subprocess.run(
+#                 [candidate, "-version"],
+#                 capture_output=True, text=True
+#             )
+#             if result.returncode == 0:
+#                 return candidate
+#         except FileNotFoundError:
+#             continue
+#     raise RuntimeError("ffmpeg not found. Install it or check PATH.")
 
 
-FFMPEG = "../ffmpeg"
+# FFMPEG = find_ffmpeg()
+# print(f"✅ Using ffmpeg: {FFMPEG}")
+
+# import os
+
+FFMPEG = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ffmpeg"))
 print(f"✅ Using ffmpeg: {FFMPEG}")
-
 
 def get_font(size):
     for path in [
