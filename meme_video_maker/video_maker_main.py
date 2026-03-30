@@ -384,8 +384,18 @@ def build_meme_timeline_ffmpeg(memes, duration, canvas_w, canvas_h):
         meme_concat,
     ], capture_output=True, text=True)
 
-    if result.returncode != 0 or not os.path.isfile(meme_concat):
-        raise RuntimeError(f"ffmpeg concat failed:\n{result.stderr}")
+    # if result.returncode != 0 or not os.path.isfile(meme_concat):
+    #     raise RuntimeError(f"ffmpeg concat failed:\n{result.stderr}")
+
+    if result.returncode != 0:
+        raise RuntimeError(f"ffmpeg resize failed:\n{result.stderr[-2000:]}")
+
+    # 🔴 ADD THIS BLOCK
+    if not os.path.isfile(out_path) or os.path.getsize(out_path) < 50_000:
+        raise RuntimeError(
+            f"ffmpeg resize produced invalid file: {out_path}\n"
+            f"stderr:\n{result.stderr[-1000:]}"
+        )
 
     print(f"  ✅ Meme track ready: {meme_concat} ({os.path.getsize(meme_concat) // 1024} KB)")
     return meme_concat
@@ -585,8 +595,8 @@ def main():
                 memes      = random.sample(all_memes, num_memes)
                 meme_track = build_meme_timeline_ffmpeg(memes, duration, CANVAS_W, top_h)
 
-                # if not os.path.isfile(joker_resized):
-                #     raise RuntimeError(f"Missing joker_resized file: {joker_resized}")
+                if not os.path.isfile(joker_resized):
+                    raise RuntimeError(f"Missing joker_resized file: {joker_resized}")
 
                 stack_videos_ffmpeg(meme_track, joker_resized, None, output_path, top_h, bot_h)
 
