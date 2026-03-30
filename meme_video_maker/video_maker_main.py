@@ -127,8 +127,24 @@ def list_files(directory, extensions):
 
 # import os
 
-FFMPEG = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ffmpeg"))
-print(f"✅ Using ffmpeg: {FFMPEG}")
+# FFMPEG = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ffmpeg"))
+# print(f"✅ Using ffmpeg: {FFMPEG}")
+
+def detect_ffmpeg():
+    ffmpeg_bin = shutil.which("ffmpeg")
+    if ffmpeg_bin:
+        return ffmpeg_bin
+    local_bin = "./ffmpeg-7.0.2-amd64-static/ffmpeg"
+    if os.path.exists(local_bin):
+        os.chmod(local_bin, 0o755)
+        return local_bin
+    raise FileNotFoundError(
+        "FFmpeg not found. Install it (sudo apt install ffmpeg) "
+        "or place the static binary in the project root."
+    )
+
+FFMPEG = detect_ffmpeg()
+print("Using FFmpeg:", FFMPEG)
 
 def get_font(size):
     for path in [
