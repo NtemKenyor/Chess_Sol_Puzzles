@@ -428,6 +428,9 @@ full_message = f" {msg} {tags} . "
 safe_message = full_message.replace("\n", " ").strip()
 safe_message = full_message.encode("ascii", "ignore").decode()
 
+#TODO: instead of putting this link on the post, it is best we get the post if, and put the link as the first comment....
+#TODO: The question is does our posting API return the post_id on the social media platform?
+
 # puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
 puzzle_link = ""
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
