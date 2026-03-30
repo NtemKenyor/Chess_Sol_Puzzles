@@ -184,10 +184,16 @@ def load_meme_as_canvas(meme_path, canvas_w, canvas_h):
     """
     img   = ImageClip(meme_path)
     scale = min(canvas_w / img.w, canvas_h / img.h)
-    new_w = int(img.w * scale)
-    new_h = int(img.h * scale)
+    # new_w = int(img.w * scale)
+    # new_h = int(img.h * scale)
+    new_w = int(round(img.w * scale))
+    new_h = int(round(img.h * scale))
+
     img   = img.resized(width=new_w, height=new_h)
     raw   = img.get_frame(0)
+
+    # 🔧 enforce exact dimensions
+    raw = raw[:new_h, :new_w]
 
     canvas = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
     y_off  = (canvas_h - new_h) // 2
@@ -579,6 +585,9 @@ def main():
                 memes      = random.sample(all_memes, num_memes)
                 meme_track = build_meme_timeline_ffmpeg(memes, duration, CANVAS_W, top_h)
 
+                if not os.path.isfile(joker_resized):
+                    raise RuntimeError(f"Missing joker_resized file: {joker_resized}")
+
                 stack_videos_ffmpeg(meme_track, joker_resized, None, output_path, top_h, bot_h)
 
             elif MODE == "memes_only":
@@ -598,9 +607,11 @@ def main():
 
             size_mb = os.path.getsize(output_path) / (1024 * 1024)
             print(f"\n✅ Video saved: {output_path} ({size_mb:.1f} MB)")
+            cleanup_temp();
 
         finally:
-            cleanup_temp()
+        #     cleanup_temp()
+            pass
 
     if POST_TO_SOCIAL:
         post_video(OUTPUT_NAME)
