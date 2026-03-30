@@ -34,7 +34,8 @@ from moviepy import (
 # ─────────────────────────────────────────────
 
 MODE        = "combined"   # "combined" | "memes_only" | "joker_only"
-CANVAS_W    = 1080
+# CANVAS_W    = 1080
+CANVAS_W = 720
 CANVAS_H    = 1920
 SPLIT_RATIO = 0.5          # memes get top half, joker gets bottom half
 
@@ -70,7 +71,7 @@ FPS           = 24
 VIDEO_CODEC   = "libx264"
 CRF           = "23"        # ffmpeg quality: lower = better, 18-28 is typical
 AUDIO_BITRATE = "192k"
-FFMPEG_PRESET = "fast"      # ultrafast/superfast/veryfast/fast/medium
+FFMPEG_PRESET = "ultrafast"      # ultrafast/superfast/veryfast/fast/medium
 
 # ── ffmpeg binaries ─────────────────────────────
 # Points to the static build in your project folder.
@@ -236,6 +237,7 @@ def write_clip_via_ffmpeg(frames_iter, total_frames, out_path, fps, canvas_w, ca
         "-vcodec", VIDEO_CODEC,
         "-pix_fmt", "yuv420p",
         "-preset", FFMPEG_PRESET,
+        "-tune", "zerolatency",
         "-crf", CRF,
         "-movflags", "+faststart",
         out_path,
@@ -436,6 +438,7 @@ def stack_videos_ffmpeg(meme_path, joker_path, audio_path, out_path, top_h, bot_
         "-vcodec", VIDEO_CODEC,
         "-pix_fmt", "yuv420p",
         "-preset", FFMPEG_PRESET,
+        "-tune", "zerolatency",
         "-crf", CRF,
         "-acodec", "aac",
         "-b:a", AUDIO_BITRATE,
@@ -494,6 +497,7 @@ def resize_video_ffmpeg(in_path, out_path, width, height):
         "-vcodec", VIDEO_CODEC,
         "-pix_fmt", "yuv420p",
         "-preset", FFMPEG_PRESET,
+        "-tune", "zerolatency",
         "-crf", CRF,
         "-acodec", "aac",
         "-b:a", AUDIO_BITRATE,
@@ -607,6 +611,12 @@ def main():
 
                 if not os.path.isfile(joker_resized):
                     raise RuntimeError(f"Missing joker_resized file: {joker_resized}")
+
+                # filter_complex = (
+                #     f"[0:v]scale={CANVAS_W}:{top_h},format=yuv420p[top];"
+                #     f"[1:v]scale={CANVAS_W}:{bot_h},format=yuv420p[bot];"
+                #     f"[top][bot]vstack=inputs=2[v]"
+                # )
 
                 stack_videos_ffmpeg(meme_track, joker_resized, None, output_path, top_h, bot_h)
 
