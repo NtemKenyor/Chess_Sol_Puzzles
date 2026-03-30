@@ -78,6 +78,8 @@ PUBLIC_BASE_URL   = "https://roynek.com/Chess_Sol_Puzzles/meme_video_maker/outpu
 GAME_LINK         = "https://roynek.com/Chess_Sol_Puzzles/public/"
 FACEBOOK_AREA_ID  = "6"
 X_AREA_ID         = "21"
+LOCAL_FFMPEG_BIN = "../auto_post_legend/ffmpeg-7.0.2-amd64-static/ffmpeg"
+
 
 MESSAGES = [
     "Chess memes hitting different today! Tag a chess friend who needs this!",
@@ -134,7 +136,7 @@ def detect_ffmpeg():
     ffmpeg_bin = shutil.which("ffmpeg")
     if ffmpeg_bin:
         return ffmpeg_bin
-    local_bin = "./ffmpeg-7.0.2-amd64-static/ffmpeg"
+    local_bin = LOCAL_FFMPEG_BIN
     if os.path.exists(local_bin):
         os.chmod(local_bin, 0o755)
         return local_bin
