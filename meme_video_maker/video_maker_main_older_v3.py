@@ -72,17 +72,14 @@ CRF           = "23"        # ffmpeg quality: lower = better, 18-28 is typical
 AUDIO_BITRATE = "192k"
 FFMPEG_PRESET = "fast"      # ultrafast/superfast/veryfast/fast/medium
 
-# ── ffmpeg binaries ─────────────────────────────
-# Points to the static build in your project folder.
-# Change this if you move the folder.
-FFMPEG_STATIC_DIR = "./ffmpeg-7.0.2-amd64-static"
-
 POST_TO_SOCIAL    = True
 DELETE_AFTER_POST = False
 PUBLIC_BASE_URL   = "https://roynek.com/Chess_Sol_Puzzles/meme_video_maker/output_videos"
 GAME_LINK         = "https://roynek.com/Chess_Sol_Puzzles/public/"
 FACEBOOK_AREA_ID  = "6"
 X_AREA_ID         = "21"
+LOCAL_FFMPEG_BIN = "./ffmpeg-7.0.2-amd64-static/ffmpeg"
+
 
 MESSAGES = [
     "Chess memes hitting different today! Tag a chess friend who needs this!",
@@ -111,32 +108,45 @@ def list_files(directory, extensions):
     ])
 
 
-def _resolve_bin(name):
-    """
-    Find ffmpeg/ffprobe by checking the static folder first,
-    then falling back to common system locations.
-    """
-    static_path = os.path.join(FFMPEG_STATIC_DIR, name)
-    if os.path.isfile(static_path):
-        return static_path
-    for candidate in [f"/usr/bin/{name}", f"/usr/local/bin/{name}", name]:
-        try:
-            r = subprocess.run([candidate, "-version"], capture_output=True)
-            if r.returncode == 0:
-                return candidate
-        except FileNotFoundError:
-            continue
-    raise RuntimeError(
-        f"'{name}' not found. Expected: {static_path}\n"
-        f"Check FFMPEG_STATIC_DIR = '{FFMPEG_STATIC_DIR}' is correct."
+# def find_ffmpeg():
+#     """Return path to ffmpeg binary, trying common cPanel locations."""
+#     for candidate in ["ffmpeg", "/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg",
+#                       "/opt/cpanel/ea-php81/root/usr/bin/ffmpeg"]:
+#         try:
+#             result = subprocess.run(
+#                 [candidate, "-version"],
+#                 capture_output=True, text=True
+#             )
+#             if result.returncode == 0:
+#                 return candidate
+#         except FileNotFoundError:
+#             continue
+#     raise RuntimeError("ffmpeg not found. Install it or check PATH.")
+
+
+# FFMPEG = find_ffmpeg()
+# print(f"✅ Using ffmpeg: {FFMPEG}")
+
+# import os
+
+# FFMPEG = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ffmpeg"))
+# print(f"✅ Using ffmpeg: {FFMPEG}")
+
+def detect_ffmpeg():
+    ffmpeg_bin = shutil.which("ffmpeg")
+    if ffmpeg_bin:
+        return ffmpeg_bin
+    local_bin = LOCAL_FFMPEG_BIN
+    if os.path.exists(local_bin):
+        os.chmod(local_bin, 0o755)
+        return local_bin
+    raise FileNotFoundError(
+        "FFmpeg not found. Install it (sudo apt install ffmpeg) "
+        "or place the static binary in the project root."
     )
 
-
-FFMPEG  = _resolve_bin("ffmpeg")
-FFPROBE = _resolve_bin("ffprobe")
-print(f"✅ Using ffmpeg:  {FFMPEG}")
-print(f"✅ Using ffprobe: {FFPROBE}")
-
+FFMPEG = detect_ffmpeg()
+print("Using FFmpeg:", FFMPEG)
 
 def get_font(size):
     for path in [
@@ -452,7 +462,7 @@ def build_memes_only_ffmpeg(meme_path, music_path, out_path):
 def get_video_duration(path):
     """Use ffprobe to get duration in seconds."""
     result = subprocess.run([
-        FFPROBE, "-v", "error",
+        "ffprobe", "-v", "error",
         "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1",
         path,
@@ -602,14 +612,14 @@ def main():
         finally:
             cleanup_temp()
 
-    if POST_TO_SOCIAL:
-        post_video(OUTPUT_NAME)
-        if DELETE_AFTER_POST:
-            if os.path.isfile(output_path):
-                os.remove(output_path)
-                print(f"  🗑️  Deleted: {output_path}")
-    else:
-        print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
+    # if POST_TO_SOCIAL:
+    #     post_video(OUTPUT_NAME)
+    #     if DELETE_AFTER_POST:
+    #         if os.path.isfile(output_path):
+    #             os.remove(output_path)
+    #             print(f"  🗑️  Deleted: {output_path}")
+    # else:
+    #     print("\n📵 Social posting skipped (POST_TO_SOCIAL = False).")
 
     print("\n🏁 Done!")
 
