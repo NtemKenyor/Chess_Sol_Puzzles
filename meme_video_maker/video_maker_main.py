@@ -122,7 +122,7 @@ def find_ffmpeg():
     raise RuntimeError("ffmpeg not found. Install it or check PATH.")
 
 
-FFMPEG = find_ffmpeg()
+FFMPEG = "../ffmpeg"
 print(f"✅ Using ffmpeg: {FFMPEG}")
 
 
