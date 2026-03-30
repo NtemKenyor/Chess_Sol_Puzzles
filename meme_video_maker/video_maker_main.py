@@ -78,7 +78,7 @@ PUBLIC_BASE_URL   = "https://roynek.com/Chess_Sol_Puzzles/meme_video_maker/outpu
 GAME_LINK         = "https://roynek.com/Chess_Sol_Puzzles/public/"
 FACEBOOK_AREA_ID  = "6"
 X_AREA_ID         = "21"
-LOCAL_FFMPEG_BIN = "../auto_post_legend/ffmpeg-7.0.2-amd64-static/ffmpeg"
+LOCAL_FFMPEG_BIN = "./ffmpeg-7.0.2-amd64-static/ffmpeg"
 
 
 MESSAGES = [
