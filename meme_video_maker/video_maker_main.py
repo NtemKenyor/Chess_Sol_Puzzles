@@ -585,8 +585,8 @@ def main():
                 memes      = random.sample(all_memes, num_memes)
                 meme_track = build_meme_timeline_ffmpeg(memes, duration, CANVAS_W, top_h)
 
-                if not os.path.isfile(joker_resized):
-                    raise RuntimeError(f"Missing joker_resized file: {joker_resized}")
+                # if not os.path.isfile(joker_resized):
+                #     raise RuntimeError(f"Missing joker_resized file: {joker_resized}")
 
                 stack_videos_ffmpeg(meme_track, joker_resized, None, output_path, top_h, bot_h)
 
