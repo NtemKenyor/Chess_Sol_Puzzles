@@ -428,7 +428,8 @@ full_message = f" {msg} {tags} . "
 safe_message = full_message.replace("\n", " ").strip()
 safe_message = full_message.encode("ascii", "ignore").decode()
 
-puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
+# puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
+puzzle_link = ""
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 
 output = send_to_social_media_api(
