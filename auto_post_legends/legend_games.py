@@ -985,11 +985,11 @@ video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post_legends/{OUTPUT_VID
 game_link = ""
 location  = "us_chess"
 
-# output = send_to_social_media_api(
-#     platform='facebook', link=game_link, text=safe_msg,
-#     media=video_url, area='6', fb_post_to="reels", location=location
-# )
-# print("Facebook API Response:", output)
+output = send_to_social_media_api(
+    platform='facebook', link=game_link, text=safe_msg,
+    media=video_url, area='6', fb_post_to="reels", location=location
+)
+print("Facebook API Response:", output)
 
 # ── Cleanup ───────────────────────────────────────────────────
 for f in os.listdir(TEMP_DIR):
