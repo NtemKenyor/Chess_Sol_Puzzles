@@ -518,26 +518,26 @@ def cleanup_temp():
 #  SOCIAL MEDIA
 # ─────────────────────────────────────────────
 
+
 def send_to_social_media_api(platform, link, text, media=None, area=None,
-                              x_comm_id=None, fb_post_to=None):
-    api_url = f"https://roynek.com/alltrenders/codes/python_API/social-media/{platform}"
+                              x_comm_id=None, fb_post_to=None, location=None):
+    api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
     payload = {
-        "link_2_post":       link,
-        "message":           text,
-        "media":             media,
-        "pages_ordered_ids": area,
-        "comm_id":           x_comm_id,
-        "post_to":           fb_post_to,
+        'link_2_post': link, 'message': text, 'media': media,
+        'pages_ordered_ids': area, 'comm_id': x_comm_id,
+        'post_to': fb_post_to, 'location': location
     }
-    headers = {"Content-Type": "application/json"}
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    headers = {'Content-Type': 'application/json'}
+    print(json.dumps(payload, ensure_ascii=False))
     try:
         r = requests.post(api_url, json=payload, headers=headers, timeout=3000)
         r.raise_for_status()
         return r.text
     except Exception as e:
-        print(f"  ❌ Social Media Error ({platform}):", e)
+        print('Social Media Error:', e)
         return None
+
+
 
 
 def post_video(video_filename):
@@ -545,20 +545,25 @@ def post_video(video_filename):
     tags      = " ".join(random.sample(HASHTAGS, 4))
     caption   = f"{msg} {tags}".encode("ascii", "ignore").decode().strip()
     video_url = f"{PUBLIC_BASE_URL}/{video_filename}"
+    g_link = ""
 
     print(f"\n📢  Caption:\n{caption}")
     print(f"🔗  Video URL: {video_url}\n")
 
     print("📘 Posting to Facebook Reels...")
     fb = send_to_social_media_api(
-        platform="facebook", link=GAME_LINK, text=caption,
+        platform="facebook", link=g_link, text=caption,
         media=video_url, area=FACEBOOK_AREA_ID, fb_post_to="reels",
     )
     print("Facebook response:", fb)
 
     print("\n🐦 Posting to X...")
+    # x = send_to_social_media_api(
+    #     platform="x", link=GAME_LINK, text=caption,
+    #     media=video_url, area=X_AREA_ID,
+    # )
     x = send_to_social_media_api(
-        platform="x", link=GAME_LINK, text=caption,
+        platform="x", link=g_link, text=caption,
         media=video_url, area=X_AREA_ID,
     )
     print("X response:", x)
@@ -637,7 +642,7 @@ def main():
 
             size_mb = os.path.getsize(output_path) / (1024 * 1024)
             print(f"\n✅ Video saved: {output_path} ({size_mb:.1f} MB)")
-            cleanup_temp();
+            cleanup_temp()
 
         finally:
         #     cleanup_temp()

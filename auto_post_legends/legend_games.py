@@ -991,6 +991,7 @@ output = send_to_social_media_api(
 )
 print("Facebook API Response:", output)
 
+
 # ── Cleanup ───────────────────────────────────────────────────
 for f in os.listdir(TEMP_DIR):
     os.remove(os.path.join(TEMP_DIR, f))
