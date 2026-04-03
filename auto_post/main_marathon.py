@@ -129,35 +129,98 @@ def pick_intro_audio():
     return chosen
 
 
+# def fetch_puzzles(target_count):
+#     """
+#     Fetch puzzles from all PUZZLE_THEMES, de-duplicate by puzzle ID,
+#     and return exactly target_count unique puzzles (or as many as available).
+#     Retries themes if pool is too small to fill the target.
+#     """
+#     seen_ids   = set()
+#     unique     = []
+#     max_rounds = 3   # retry rounds if we don't have enough
+
+#     for round_num in range(max_rounds):
+#         if len(unique) >= target_count:
+#             break
+
+#         print(f"\n[fetch] Round {round_num + 1} — need {target_count - len(unique)} more puzzles")
+
+#         for theme_cfg in PUZZLE_THEMES:
+#             if len(unique) >= target_count:
+#                 break
+#             try:
+#                 params    = {**theme_cfg, "limit": 100}
+#                 param_str = "&".join(f"{k}={v}" for k, v in params.items())
+#                 url       = f"https://roynek.com/Chess_Sol_Puzzles/api/puzzles?{param_str}"
+#                 print(f"  Fetching: {url}")
+#                 resp = requests.get(url, timeout=30)
+#                 data = resp.json()
+
+#                 results = data.get("results", [])
+#                 before  = len(unique)
+
+#                 for p in results:
+#                     pid = p.get("id")
+#                     if pid and pid not in seen_ids:
+#                         seen_ids.add(pid)
+#                         unique.append(p)
+
+#                 added = len(unique) - before
+#                 print(f"  → +{added} new  (pool: {len(unique)}/{target_count})")
+
+#             except Exception as e:
+#                 print(f"  ✗ Error fetching theme {theme_cfg}: {e}")
+
+#     random.shuffle(unique)
+#     selected = unique[:target_count]
+
+#     print(f"\n[fetch] Total unique puzzles collected : {len(unique)}")
+#     print(f"[fetch] Selected for this video        : {len(selected)}")
+
+#     if len(selected) < target_count:
+#         print(f"[fetch] ⚠  Only {len(selected)} unique puzzles available — video will be shorter.")
+
+#     return selected
+
+
 def fetch_puzzles(target_count):
     """
-    Fetch puzzles from all PUZZLE_THEMES, de-duplicate by puzzle ID,
-    and return exactly target_count unique puzzles (or as many as available).
-    Retries themes if pool is too small to fill the target.
+    Fetch puzzles using random offset strategy,
+    de-duplicate by puzzle ID.
     """
-    seen_ids   = set()
-    unique     = []
-    max_rounds = 3   # retry rounds if we don't have enough
+
+    seen_ids = set()
+    unique = []
+
+    max_rounds = 3
 
     for round_num in range(max_rounds):
         if len(unique) >= target_count:
             break
 
-        print(f"\n[fetch] Round {round_num + 1} — need {target_count - len(unique)} more puzzles")
+        print(f"\n[fetch] Round {round_num + 1} — need {target_count - len(unique)}")
 
         for theme_cfg in PUZZLE_THEMES:
             if len(unique) >= target_count:
                 break
+
             try:
-                params    = {**theme_cfg, "limit": 100}
-                param_str = "&".join(f"{k}={v}" for k, v in params.items())
-                url       = f"https://roynek.com/Chess_Sol_Puzzles/api/puzzles?{param_str}"
-                print(f"  Fetching: {url}")
-                resp = requests.get(url, timeout=30)
+                params = {
+                    **theme_cfg,
+                    "limit": 100,        # match backend cap
+                    "random": "true"
+                }
+
+                url = "https://roynek.com/Chess_Sol_Puzzles/api/puzzles"
+                print(f"  Fetching: {params}")
+
+                resp = requests.get(url, params=params, timeout=30)
                 data = resp.json()
 
                 results = data.get("results", [])
-                before  = len(unique)
+                random.shuffle(results)   # 🔥 improves entropy per batch
+
+                before = len(unique)
 
                 for p in results:
                     pid = p.get("id")
@@ -166,19 +229,20 @@ def fetch_puzzles(target_count):
                         unique.append(p)
 
                 added = len(unique) - before
-                print(f"  → +{added} new  (pool: {len(unique)}/{target_count})")
+                print(f"  → +{added} new (pool: {len(unique)}/{target_count})")
 
             except Exception as e:
                 print(f"  ✗ Error fetching theme {theme_cfg}: {e}")
 
+    # Final shuffle before selection
     random.shuffle(unique)
     selected = unique[:target_count]
 
-    print(f"\n[fetch] Total unique puzzles collected : {len(unique)}")
-    print(f"[fetch] Selected for this video        : {len(selected)}")
+    print(f"\n[fetch] Total unique puzzles collected: {len(unique)}")
+    print(f"[fetch] Selected for this video: {len(selected)}")
 
     if len(selected) < target_count:
-        print(f"[fetch] ⚠  Only {len(selected)} unique puzzles available — video will be shorter.")
+        print(f"[fetch] ⚠ Only {len(selected)} puzzles available")
 
     return selected
 
