@@ -13,8 +13,8 @@ import math
 # ─────────────────────────────────────────────
 #  CONFIGURATION
 # ─────────────────────────────────────────────
-# API_URL       = "https://roynek.com/Chess_Sol_Puzzles/api/puzzle/random-by-rating?min=1600"
-API_URL = "https://roynek.com/Chess_Sol_Puzzles/api/puzzles?addon=CHECKMATE&min=1800&max=4500&limit=100&random=true"
+API_URL       = "https://roynek.com/Chess_Sol_Puzzles/api/puzzle/random-by-rating?min=1600"
+# API_URL = "https://roynek.com/Chess_Sol_Puzzles/api/puzzles?addon=CHECKMATE&min=1800&max=4500&limit=100&random=true"
 FPS           = 30
 COUNTDOWN_SEC = 15          # thinking countdown after first move
 INTRO_SEC     = 3           # hold initial board before any move
