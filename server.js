@@ -261,6 +261,98 @@ app.post(MAIN_DIR + '/api/puzzle/verify', async (req, res) => {
 
 
 
+// app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
+//   try {
+//     let {
+//       q,
+//       theme,
+//       opening,
+//       min,
+//       max,
+//       limit,
+//       page
+//     } = req.query;
+
+//     min = min ? parseInt(min) : 0;
+//     max = max ? parseInt(max) : 9999;
+
+//     limit = limit ? Math.min(parseInt(limit), 50) : 20;
+//     page = page ? parseInt(page) : 1;
+//     const offset = (page - 1) * limit;
+
+//     let conditions = [];
+//     let params = [];
+
+//     // Rating filter
+//     conditions.push(`Rating BETWEEN ? AND ?`);
+//     params.push(min, max);
+
+//     // Theme
+//     if (theme) {
+//       conditions.push(`Themes LIKE ?`);
+//       params.push(`%${theme}%`);
+//     }
+
+//     // Opening
+//     if (opening) {
+//       conditions.push(`OpeningTags LIKE ?`);
+//       params.push(`%${opening}%`);
+//     }
+
+//     // Human search
+//     if (q) {
+//       const tokens = extractSearchTokens(q);
+//       if (tokens.length) {
+//         conditions.push(
+//           '(' + tokens.map(() => `Themes LIKE ?`).join(' OR ') + ')'
+//         );
+//         tokens.forEach(t => params.push(`%${t}%`));
+//       }
+//     }
+
+//     const whereClause = conditions.length
+//       ? `WHERE ${conditions.join(' AND ')}`
+//       : '';
+
+//     // Total count (for frontend pagination)
+//     const [[{ total }]] = await pool.query(
+//       `SELECT COUNT(*) AS total FROM puzzles ${whereClause}`,
+//       params
+//     );
+
+//     const [rows] = await pool.query(
+//       `
+//       SELECT
+//         PuzzleId AS id,
+//         FEN AS fen,
+//         Moves AS moves,
+//         Rating AS rating,
+//         Themes AS themes,
+//         OpeningTags AS opening,
+//         NbPlays AS plays,
+//         Popularity AS popularity
+//       FROM puzzles
+//       ${whereClause}
+//       ORDER BY Popularity DESC
+//       LIMIT ? OFFSET ?
+//       `,
+//       [...params, limit, offset]
+//     );
+
+//     res.json({
+//       page,
+//       limit,
+//       total,
+//       totalPages: Math.ceil(total / limit),
+//       results: rows
+//     });
+
+//   } catch (err) {
+//     console.error('Puzzle list error:', err.message);
+//     res.status(500).json({ error: 'Database error' });
+//   }
+// });
+
 app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
   try {
     let {
@@ -270,15 +362,18 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
       min,
       max,
       limit,
-      page
+      page,
+      random
     } = req.query;
 
     min = min ? parseInt(min) : 0;
     max = max ? parseInt(max) : 9999;
 
-    limit = limit ? Math.min(parseInt(limit), 50) : 20;
+    // Allow slightly larger batch for better entropy
+    limit = limit ? Math.min(parseInt(limit), 100) : 50;
+
     page = page ? parseInt(page) : 1;
-    const offset = (page - 1) * limit;
+    const isRandom = random === 'true';
 
     let conditions = [];
     let params = [];
@@ -314,12 +409,27 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
       ? `WHERE ${conditions.join(' AND ')}`
       : '';
 
-    // Total count (for frontend pagination)
+    // 🔹 Get total count
     const [[{ total }]] = await pool.query(
       `SELECT COUNT(*) AS total FROM puzzles ${whereClause}`,
       params
     );
 
+    // 🔹 Compute offset
+    let offset;
+    let usedPage = page;
+
+    if (isRandom) {
+      const maxOffset = Math.max(0, total - limit);
+      offset = Math.floor(Math.random() * (maxOffset + 1));
+
+      // derive page for debugging/visibility
+      usedPage = Math.floor(offset / limit) + 1;
+    } else {
+      offset = (page - 1) * limit;
+    }
+
+    // 🔹 Fetch rows
     const [rows] = await pool.query(
       `
       SELECT
@@ -340,10 +450,12 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
     );
 
     res.json({
-      page,
+      page: usedPage,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
+      random: isRandom,
+      offset,
       results: rows
     });
 
@@ -352,7 +464,6 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
-
 
 
 /* =========================

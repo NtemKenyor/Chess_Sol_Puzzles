@@ -55,12 +55,14 @@ ARROW_COLOR_OPPONENT = (255,  87,  34, 210)   # orange  #FF5722
 # ── Puzzle Themes ─────────────────────────────────────────
 # Each entry is fetched separately; results are pooled and de-duplicated.
 PUZZLE_THEMES = [
+    # {"addon": "CHECKMATE", "min": 1800, "max": 4500 },
     {"q": "endgame",   "min": 1800, "max": 3000},
     {"q": "mate in 2", "min": 1500, "max": 4500},
     {"q": "mate",      "min": 1700, "max": 4800},
     {"theme": "crushing", "min": 1700, "max": 4600},
     {"q": "fork",      "min": 1400, "max": 3400},
     {"q": "pin",       "min": 1500, "max": 3400},
+    
 ]
 
 # ── On-board Messages (shown per puzzle) ─────────────────

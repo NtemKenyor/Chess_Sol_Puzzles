@@ -6,10 +6,11 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+
 # --- CONFIGURATION ---
-VIDEO_PATH = "/var/www/html/Chess_Sol_Puzzles/youtube/chess_game.mp4"
-CLIENT_SECRETS = "client_secrets.json"
-TOKEN_FILE = "token.pickle"
+VIDEO_PATH = "chess_game.mp4"
+CLIENT_SECRETS = "secrets/client_secrets.json"
+TOKEN_FILE = "secrets/token.pickle"
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
 def get_service():
