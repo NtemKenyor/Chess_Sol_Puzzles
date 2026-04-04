@@ -440,7 +440,7 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
         Themes AS themes,
         OpeningTags AS opening,
         NbPlays AS plays,
-        Popularity AS popularity
+        Popularity AS popularity,
         addon AS addon
       FROM puzzles
       ${whereClause}
