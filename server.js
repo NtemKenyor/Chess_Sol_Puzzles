@@ -363,6 +363,7 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
       max,
       limit,
       page,
+      addon,
       random
     } = req.query;
 
@@ -392,6 +393,12 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
     if (opening) {
       conditions.push(`OpeningTags LIKE ?`);
       params.push(`%${opening}%`);
+    }
+
+    // Addon
+    if (addon) {
+      conditions.push(`addon LIKE ?`);
+      params.push(`%${addon}%`);
     }
 
     // Human search
