@@ -448,7 +448,7 @@ app.get(MAIN_DIR + '/api/puzzles', async (req, res) => {
         OpeningTags AS opening,
         NbPlays AS plays,
         Popularity AS popularity,
-        addon AS indicator
+        addon AS addon
       FROM puzzles
       ${whereClause}
       ORDER BY Popularity DESC
