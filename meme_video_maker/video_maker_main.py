@@ -519,13 +519,31 @@ def cleanup_temp():
 # ─────────────────────────────────────────────
 
 
+# def send_to_social_media_api(platform, link, text, media=None, area=None,
+#                               x_comm_id=None, fb_post_to=None, location=None):
+#     api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
+#     payload = {
+#         'link_2_post': link, 'message': text, 'media': media,
+#         'pages_ordered_ids': area, 'comm_id': x_comm_id,
+#         'post_to': fb_post_to, 'location': location
+#     }
+#     headers = {'Content-Type': 'application/json'}
+#     print(json.dumps(payload, ensure_ascii=False))
+#     try:
+#         r = requests.post(api_url, json=payload, headers=headers, timeout=3000)
+#         r.raise_for_status()
+#         return r.text
+#     except Exception as e:
+#         print('Social Media Error:', e)
+#         return None
+
+
 def send_to_social_media_api(platform, link, text, media=None, area=None,
-                              x_comm_id=None, fb_post_to=None, location=None):
+                              x_comm_id=None, fb_post_to=None):
     api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
     payload = {
         'link_2_post': link, 'message': text, 'media': media,
-        'pages_ordered_ids': area, 'comm_id': x_comm_id,
-        'post_to': fb_post_to, 'location': location
+        'pages_ordered_ids': area, 'comm_id': x_comm_id, 'post_to': fb_post_to
     }
     headers = {'Content-Type': 'application/json'}
     print(json.dumps(payload, ensure_ascii=False))
@@ -536,8 +554,7 @@ def send_to_social_media_api(platform, link, text, media=None, area=None,
     except Exception as e:
         print('Social Media Error:', e)
         return None
-
-
+    
 
 
 def post_video(video_filename):
@@ -553,7 +570,7 @@ def post_video(video_filename):
     print("📘 Posting to Facebook Reels...")
     fb = send_to_social_media_api(
         platform="facebook", link=g_link, text=caption,
-        media=video_url, area=FACEBOOK_AREA_ID, fb_post_to="reels",
+        media=video_url, area=FACEBOOK_AREA_ID, fb_post_to="reels"
     )
     print("Facebook response:", fb)
 

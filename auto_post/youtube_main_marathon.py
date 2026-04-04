@@ -579,6 +579,100 @@ def encode_video(intro_file=None):
     subprocess.run(cmd, shell=True, check=True)
 
 
+
+import pickle
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+
+# ─────────────────────────────────────────────
+#  YOUTUBE UPLOAD
+# ─────────────────────────────────────────────
+YT_CLIENT_SECRETS = "secrets/client_secrets.json"
+YT_TOKEN_FILE     = "secrets/token.pickle"
+YT_SCOPES         = ["https://www.googleapis.com/auth/youtube.upload"]
+
+def get_youtube_service():
+    creds = None
+    if os.path.exists(YT_TOKEN_FILE):
+        with open(YT_TOKEN_FILE, 'rb') as f:
+            creds = pickle.load(f)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(YT_CLIENT_SECRETS, YT_SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open(YT_TOKEN_FILE, 'wb') as f:
+            pickle.dump(creds, f)
+
+    return build("youtube", "v3", credentials=creds)
+
+
+def send_to_youtube(video_path, title, description, tags=None,
+                    privacy="public", made_for_kids=False):
+    """
+    Upload a local MP4 to YouTube.
+
+    Args:
+        video_path    : path to the .mp4 file
+        title         : video title (include #Shorts for Shorts)
+        description   : caption / description shown on YouTube
+        tags          : list of tag strings
+        privacy       : "public" | "unlisted" | "private"
+        made_for_kids : set True only if content is explicitly for children
+
+    Returns:
+        YouTube video ID string on success, None on failure.
+    """
+    if not os.path.exists(video_path):
+        print(f"[youtube] ✗ File not found: {video_path}")
+        return None
+
+    try:
+        youtube = get_youtube_service()
+
+        body = {
+            "snippet": {
+                "title":       title[:100],        # YouTube hard limit: 100 chars
+                "description": description[:5000],  # YouTube hard limit: 5000 chars
+                "tags":        tags or [],
+                "categoryId":  "20",               # Gaming — best category for chess
+            },
+            "status": {
+                "privacyStatus":           privacy,
+                "selfDeclaredMadeForKids": made_for_kids,
+            },
+        }
+
+        media   = MediaFileUpload(video_path, chunksize=-1, resumable=True)
+        request = youtube.videos().insert(
+            part="snippet,status",
+            body=body,
+            media_body=media,
+        )
+
+        print(f"[youtube] Uploading: {video_path}")
+        response = None
+        while response is None:
+            status, response = request.next_chunk()
+            if status:
+                print(f"[youtube] {int(status.progress() * 100)}% uploaded...")
+
+        video_id = response.get("id")
+        print(f"[youtube] ✅ Done — https://youtube.com/watch?v={video_id}")
+        return video_id
+
+    except Exception as e:
+        print(f"[youtube] ✗ Upload failed: {e}")
+        return None
+
+
+
+
 # ═══════════════════════════════════════════════════════════
 #  MAIN
 # ═══════════════════════════════════════════════════════════
@@ -670,20 +764,44 @@ puzzle_link = ""
 
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 
-output = send_to_social_media_api(
-    platform='facebook',
-    link=puzzle_link,
-    text=safe_message,
-    media=video_url,
-    area='6',
-    fb_post_to="reels"
-)
+# output = send_to_social_media_api(
+#     platform='facebook',
+#     link=puzzle_link,
+#     text=safe_message,
+#     media=video_url,
+#     area='6',
+#     fb_post_to="reels"
+# )
 
-print("Facebook: Social API Response:", output)
+# print("Facebook: Social API Response:", output)
 
 # Uncomment to auto-post:
 # video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 # send_to_social_media_api('facebook', '', social_msg, video_url, area='6', fb_post_to='reels')
+
+
+
+# ── YouTube ────────────────────────────────────────────────
+duration_m = (frame_count / FPS) / 60
+yt_title   = f"{total_puzzles} Chess Puzzles in a Row — Can You Solve Them All?"
+yt_desc    = (
+    f"{social_msg}\n\n"
+    f"{total_puzzles} tactical puzzles back to back.\n"
+    f"Drop your score in the comments — how many did you get?\n\n"
+    f"Timestamps are auto-generated.\n\n"
+    f"#Chess #ChessPuzzles #ChessTactics #Tactics #BrainTeaser"
+)
+yt_tags = ["chess", "chess puzzles", "chess tactics", "checkmate",
+           "brain teaser", "chess marathon", "chesssol", "grandmaster"]
+
+send_to_youtube(
+    video_path = OUTPUT_VIDEO,
+    title      = yt_title,
+    description= yt_desc,
+    tags       = yt_tags,
+    privacy    = "public",
+)
+
 
 # ── 6. Cleanup ────────────────────────────────────────────
 print("\nCleaning up temporary frames...")
