@@ -15,7 +15,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-
+import time
 
 # ═══════════════════════════════════════════════════════════
 #  CONFIGURATION
@@ -24,10 +24,10 @@ NUM_PUZZLES   = 2
 FPS           = 30
 COUNTDOWN_SEC = 20
 INTRO_SEC     = 3
-ARROW_SEC     = 2
-MOVE_SEC      = 2
+ARROW_SEC     = 1
+MOVE_SEC      = 1
 FINAL_SEC     = 3
-BREAK_SEC     = 3
+BREAK_SEC     = 2
 
 TEMP_DIR      = "frames_mates"
 OUTPUT_VIDEO  = "output_video/chess_long_mate.mp4"
@@ -766,6 +766,8 @@ for idx, (board, moves, rating, side_to_move, verification) in \
 # ── 4. Encode ─────────────────────────────────────────────
 print(f"\n[4/4] Encoding video — {frame_count} frames...")
 encode_video(intro_file=intro_file)
+
+time.sleep( random.randint(5, 10) )
 
 # ── 5. Social copy ────────────────────────────────────────
 social_msg   = random.choice(SOCIAL_MESSAGES).format(n=total_puzzles)
