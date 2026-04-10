@@ -48,8 +48,8 @@ OUTPUT_NAME   = "meme_video.mp4"
 TEMP_DIR      = "temp_clips"
 SKIP_EXISTING = False
 
-MEME_DURATION_MIN = 3
-MEME_DURATION_MAX = 5
+MEME_DURATION_MIN = 5
+MEME_DURATION_MAX = 9
 
 KEN_BURNS_ENABLED  = True
 KEN_BURNS_ZOOM_MIN = 1.0
@@ -588,14 +588,19 @@ def post_video(video_filename):
     print(f"🔗  Video URL: {video_url}\n")
 
     print("📘 Posting to Facebook Reels...")
+    location1  = "us_chess"
+
     fb = send_to_social_media_api(
         platform="facebook", link=g_link, text=caption,
-        media=video_url, area=FACEBOOK_AREA_ID, fb_post_to="reels"
+        media=video_url, area=FACEBOOK_AREA_ID, fb_post_to="reels", location=location1
     )
     print("Facebook response:", fb)
 
     print("\n🐦 Posting to X...")
-
+    # x = send_to_social_media_api(
+    #     platform="x", link=GAME_LINK, text=caption,
+    #     media=video_url, area=X_AREA_ID,
+    # )
     x = send_to_social_media_api(
         platform="x", link=g_link, text=caption,
         media=video_url, area=X_AREA_ID,
