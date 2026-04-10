@@ -48,8 +48,8 @@ OUTPUT_NAME   = "meme_video.mp4"
 TEMP_DIR      = "temp_clips"
 SKIP_EXISTING = False
 
-MEME_DURATION_MIN = 5
-MEME_DURATION_MAX = 9
+MEME_DURATION_MIN = 3
+MEME_DURATION_MAX = 5
 
 KEN_BURNS_ENABLED  = True
 KEN_BURNS_ZOOM_MIN = 1.0
@@ -538,12 +538,31 @@ def cleanup_temp():
 #         return None
 
 
+# def send_to_social_media_api(platform, link, text, media=None, area=None,
+#                               x_comm_id=None, fb_post_to=None):
+#     api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
+#     payload = {
+#         'link_2_post': link, 'message': text, 'media': media,
+#         'pages_ordered_ids': area, 'comm_id': x_comm_id, 'post_to': fb_post_to
+#     }
+#     headers = {'Content-Type': 'application/json'}
+#     print(json.dumps(payload, ensure_ascii=False))
+#     try:
+#         r = requests.post(api_url, json=payload, headers=headers, timeout=3000)
+#         r.raise_for_status()
+#         return r.text
+#     except Exception as e:
+#         print('Social Media Error:', e)
+#         return None
+    
+
 def send_to_social_media_api(platform, link, text, media=None, area=None,
-                              x_comm_id=None, fb_post_to=None):
+                              x_comm_id=None, fb_post_to=None, location=None):
     api_url = f'https://roynek.com/alltrenders/codes/python_API/social-media/{platform}'
     payload = {
         'link_2_post': link, 'message': text, 'media': media,
-        'pages_ordered_ids': area, 'comm_id': x_comm_id, 'post_to': fb_post_to
+        'pages_ordered_ids': area, 'comm_id': x_comm_id,
+        'post_to': fb_post_to, 'location': location
     }
     headers = {'Content-Type': 'application/json'}
     print(json.dumps(payload, ensure_ascii=False))
@@ -554,7 +573,8 @@ def send_to_social_media_api(platform, link, text, media=None, area=None,
     except Exception as e:
         print('Social Media Error:', e)
         return None
-    
+
+
 
 
 def post_video(video_filename):
@@ -575,10 +595,7 @@ def post_video(video_filename):
     print("Facebook response:", fb)
 
     print("\n🐦 Posting to X...")
-    # x = send_to_social_media_api(
-    #     platform="x", link=GAME_LINK, text=caption,
-    #     media=video_url, area=X_AREA_ID,
-    # )
+
     x = send_to_social_media_api(
         platform="x", link=g_link, text=caption,
         media=video_url, area=X_AREA_ID,
