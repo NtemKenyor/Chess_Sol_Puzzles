@@ -40,6 +40,9 @@ INTRO_AUDIO_DIR = random.choice(ls)
 
 # ── Background & Click Audio ──────────────────────────────
 BACKGROUND_MUSIC = "bg_music_free2.mp3"
+# BACKGROUND_MUSIC = "bg_music_free.wav"
+# BACKGROUND_MUSIC = "bg_music.mp3"
+
 CLICK_SOUND      = "move.mp3"
 BG_MUSIC_VOLUME  = 0.12
 CLICK_VOLUME     = 0.65
@@ -784,7 +787,7 @@ print(f"\n📢  Social copy : {social_msg}")
 print(f"    YT title    : {yt_title_raw}")
 
 # ── 6. Facebook ───────────────────────────────────────────
-""" print("\n  → Posting to platforms...")
+print("\n  → Posting to platforms...")
 if POST_TO_FACEBOOK:
     fb_out = send_to_social_media_api(
         platform="facebook", link=puzzle_link, text=safe_message,
@@ -814,7 +817,7 @@ if UPLOAD_TO_YOUTUBE:
     )
 else:
     print("  YouTube upload disabled.")
- """
+
 # ── 8. Cleanup ────────────────────────────────────────────
 print("\nCleaning up temporary frames...")
 for f in os.listdir(TEMP_DIR):
