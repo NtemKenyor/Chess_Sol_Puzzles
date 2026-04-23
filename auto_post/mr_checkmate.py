@@ -30,7 +30,7 @@ FINAL_SEC     = 3
 BREAK_SEC     = 2
 
 TEMP_DIR      = "frames_mates"
-OUTPUT_VIDEO  = "output_video/chess_long_mate.mp4"
+OUTPUT_VIDEO  = "output_video/chess_long_mate_monetised.mp4"
 FONT_PATH     = "./Roboto-Regular.ttf"
 BOARD_SIZE    = 800
 
