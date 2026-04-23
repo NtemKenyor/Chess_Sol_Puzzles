@@ -41,7 +41,7 @@ INTRO_AUDIO_DIR = random.choice(ls)
 
 # ── Background & Click Audio ──────────────────────────────
 BACKGROUND_MUSIC = "bg_music_free2.mp3"
-# BACKGROUND_MUSIC = "bg_music.mp3" #whale shout and lion roar
+# BACKGROUND_MUSIC = "bg_music.mp3" #whale shout and lion roar - in dispute
 CLICK_SOUND      = "move.mp3"
 BG_MUSIC_VOLUME  = 0.12
 CLICK_VOLUME     = 0.65
