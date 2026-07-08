@@ -40,7 +40,7 @@ INTRO_AUDIO_DIR = random.choice(ls)    # ← point this at your folder
 # Use royalty-free / CC0 files. Good sources:
 #   Music  → https://pixabay.com/music/
 #   Clicks → https://freesound.org  (filter CC0)
-BACKGROUND_MUSIC = "bg_music_free2.mp3"
+BACKGROUND_MUSIC = "bg_music.mp3"
 CLICK_SOUND      = "move.mp3"
 BG_MUSIC_VOLUME  = 0.12    # very subtle (0.0 – 1.0)
 CLICK_VOLUME     = 0.65

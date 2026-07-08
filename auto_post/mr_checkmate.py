@@ -39,7 +39,7 @@ ls = ["./intro_sounds", "/intro_fake"]
 INTRO_AUDIO_DIR = random.choice(ls)
 
 # ── Background & Click Audio ──────────────────────────────
-# BACKGROUND_MUSIC = "bg_music_free2.mp3" #the AI violen
+# BACKGROUND_MUSIC = "bg_music.mp3" #the AI violen
 BACKGROUND_MUSIC = "bg_music_free.wav" #raw sound
 # BACKGROUND_MUSIC = "bg_music.mp3" #the whale scream
 CLICK_SOUND      = "move.mp3"
