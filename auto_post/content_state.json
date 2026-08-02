@@ -1,0 +1,16 @@
+{
+  "marathon_board_theme": "mono",
+  "marathon_font_style": "oversize",
+  "marathon_arrow_pair": "pink_navy",
+  "marathon_zoom": "full",
+  "marathon_countdown": "quick_8",
+  "marathon_hook": "This took me 3 tries.",
+  "marathon_cta": "Don't scroll till you solve it \ud83d\udc40",
+  "reels_board_theme": "midnight",
+  "reels_font_style": "oversize",
+  "reels_arrow_pair": "teal_amber",
+  "reels_zoom": "full",
+  "reels_countdown": "quick_10",
+  "reels_hook": "Pause. Then solve.",
+  "reels_cta": "Tag someone who'd fail this \ud83d\ude05"
+}

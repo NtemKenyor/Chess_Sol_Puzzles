@@ -9,21 +9,18 @@ import random
 import shutil
 import json
 import math
-import datetime
-
-import content_engine as ce
 
 # ═══════════════════════════════════════════════════════════
 #  CONFIGURATION
 # ═══════════════════════════════════════════════════════════
 NUM_PUZZLES   = 3          # how many puzzles to include in the video
 FPS           = 30
+COUNTDOWN_SEC = 20          # thinking time per puzzle
 INTRO_SEC     = 3           # hold initial board before any move
 ARROW_SEC     = 2           # show arrow before each move executes
 MOVE_SEC      = 2           # hold board after each move plays
 FINAL_SEC     = 3           # pause at end of each puzzle
 BREAK_SEC     = 4           # transition screen between puzzles
-HOOK_SEC      = 2           # attention-grabbing opener, first 2 seconds
 
 TEMP_DIR      = "frames"
 OUTPUT_VIDEO  = "output_video/chess_long.mp4"
@@ -31,30 +28,41 @@ FONT_PATH     = "./Roboto-Regular.ttf"
 BOARD_SIZE    = 800
 
 # ── Intro Audio ───────────────────────────────────────────
-# Folder with YOUR recorded intro files. Picked once per video (never the
-# same file two videos in a row, thanks to content_engine's repeat guard).
+# Folder with YOUR recorded intro files. Picked once, at the very start.
 # Supported: .mp3  .wav  .ogg  .m4a
-INTRO_AUDIO_DIR = "./intro_sounds"
+# INTRO_AUDIO_DIR = "./intro_sounds"
+# INTRO_AUDIO_DIR = "./intro_sounds"
+ls = ["./intro_sounds", "/intro_fake"] # intro_fake does not exist. I am using it to skip intro audios..
+INTRO_AUDIO_DIR = random.choice(ls)    # ← point this at your folder
+
 
 # ── Background & Click Audio ──────────────────────────────
-# Drop MULTIPLE files in these folders for real audio variety (point 5 of
-# the growth plan). If a folder has just one file, that one is always used.
-BACKGROUND_MUSIC_DIR = "./music_sounds"       # multiple bg tracks
-CLICK_SOUND_DIR      = "./click_sounds"       # multiple click sfx
-BACKGROUND_MUSIC     = "bg_music.mp3"         # fallback if dir absent
-CLICK_SOUND          = "move.mp3"             # fallback if dir absent
+# Use royalty-free / CC0 files. Good sources:
+#   Music  → https://pixabay.com/music/
+#   Clicks → https://freesound.org  (filter CC0)
+BACKGROUND_MUSIC = "bg_music.mp3"
+CLICK_SOUND      = "move.mp3"
 BG_MUSIC_VOLUME  = 0.12    # very subtle (0.0 – 1.0)
 CLICK_VOLUME     = 0.65
 INCLUDE_BG_MUSIC = True    # set False for a silent video
 
-# ── Puzzle Themes (pool queried each run) ─────────────────
+# ── Arrow Colors ──────────────────────────────────────────
+# Even move index (0, 2, 4…) = opponent  → warning orange
+# Odd  move index (1, 3, 5…) = solver    → gold
+ARROW_COLOR_SOLVER   = (255, 215,   0, 230)   # gold    #FFD700
+ARROW_COLOR_OPPONENT = (255,  87,  34, 210)   # orange  #FF5722
+
+# ── Puzzle Themes ─────────────────────────────────────────
+# Each entry is fetched separately; results are pooled and de-duplicated.
 PUZZLE_THEMES = [
+    # {"addon": "CHECKMATE", "min": 1800, "max": 4500, "random": "true" },
     {"q": "endgame",   "min": 1800, "max": 3000},
     {"q": "mate in 2", "min": 1500, "max": 4500},
     {"q": "mate",      "min": 1700, "max": 4800},
     {"theme": "crushing", "min": 1700, "max": 4600},
     {"q": "fork",      "min": 1400, "max": 3400},
     {"q": "pin",       "min": 1500, "max": 3400},
+    
 ]
 
 # ── On-board Messages (shown per puzzle) ─────────────────
@@ -73,51 +81,14 @@ PUZZLE_MESSAGES = [
 
 # ── Social Copy ───────────────────────────────────────────
 SOCIAL_MESSAGES = [
-    "Can you solve all {n} puzzles?",
+    "Can you solve all {n} puzzles? 🧩 Drop your score below!",
     "{n} chess puzzles in one video — how many can you get?",
-    "Marathon chess challenge — {n} puzzles, can you ace them all?",
+    "Marathon chess challenge 🔥 — {n} puzzles, can you ace them all?",
     "Train like a GM — {n} tactical puzzles back to back!",
 ]
-HASHTAGS = ["#ChessTactics", "#ChessStrategy", "#Checkmate", "#Grandmaster",
-            "#Chess", "#ChessReels", "#BoardGames", "#ChessSol",
-            "#LearnChess", "#ChessTips", "#PuzzleSolving", "#MentalGym",
-            "#StrategicThinking", "#SpeedChess"]
+# HASHTAGS = ["#Chess", "#ChessPuzzles", "#Tactics", "#BrainTeaser", "#ChessMarathon"]
+HASHTAGS = ["#ChessTactics", "#ChessStrategy", "#Checkmate", "#Grandmaster", "#Chess", "#ChessReels", "#BoardGames", "#ChessPunks", "#ChessSol", "#Checkmate", "#LearnChess", "#ChessMasterclass", "#ChessTips", "#PuzzleSolving", "#MentalGym", "#StrategicThinking", "#SpeedChess"]
 
-
-# ═══════════════════════════════════════════════════════════
-#  PER-VIDEO "RECIPE" — picked once, never repeats back-to-back
-# ═══════════════════════════════════════════════════════════
-BOARD_THEME     = ce.pick_unique("marathon_board_theme", ce.BOARD_THEMES)
-FONT_STYLE      = ce.pick_unique("marathon_font_style", ce.FONT_STYLES)
-ARROW_PAIR      = ce.pick_unique("marathon_arrow_pair", ce.ARROW_COLOR_PAIRS)
-ZOOM_VARIANT    = ce.pick_unique("marathon_zoom", ce.ZOOM_VARIANTS)
-COUNTDOWN_STYLE = ce.pick_unique("marathon_countdown", ce.COUNTDOWN_STYLES)
-HOOK_TEXT       = ce.pick_unique("marathon_hook", ce.HOOKS)
-CTA_TEXT        = ce.pick_unique("marathon_cta", ce.CTAS)
-SERIES          = ce.todays_series()
-
-COUNTDOWN_SEC = COUNTDOWN_STYLE["seconds"]
-
-ARROW_COLOR_SOLVER   = ARROW_PAIR["solver"]
-ARROW_COLOR_OPPONENT = ARROW_PAIR["opponent"]
-
-print("─" * 60)
-print(f"  Recipe for this video:")
-print(f"    Board theme : {BOARD_THEME['name']}")
-print(f"    Font style  : {FONT_STYLE['name']}")
-print(f"    Arrow pair  : {ARROW_PAIR['name']}")
-print(f"    Zoom        : {ZOOM_VARIANT['name']}")
-print(f"    Countdown   : {COUNTDOWN_STYLE['name']} ({COUNTDOWN_SEC}s)")
-print(f"    Hook        : {HOOK_TEXT}")
-print(f"    Series      : {SERIES['label']}")
-print("─" * 60)
-
-# Bias today's puzzle pool toward the weekly series theme, then fill the
-# rest from the general pool (keeps variety while still building a habit).
-SERIES_THEME_CFG = {"min": SERIES["min"], "max": SERIES["max"]}
-if SERIES["q"]:
-    SERIES_THEME_CFG["q"] = SERIES["q"]
-ACTIVE_PUZZLE_THEMES = [SERIES_THEME_CFG] + PUZZLE_THEMES
 
 
 # ═══════════════════════════════════════════════════════════
@@ -139,35 +110,88 @@ FFMPEG_BIN = detect_ffmpeg()
 print("Using FFmpeg:", FFMPEG_BIN)
 
 
-def pick_from_dir(folder, fallback_file, supported=(".mp3", ".wav", ".ogg", ".m4a")):
-    """Pick a random audio file from `folder`; fall back to a single file."""
-    if os.path.isdir(folder):
-        files = [os.path.join(folder, f) for f in os.listdir(folder)
-                 if f.lower().endswith(supported)]
-        if files:
-            return random.choice(files)
-    if os.path.exists(fallback_file):
-        return fallback_file
-    return None
-
-
 def pick_intro_audio():
-    chosen = pick_from_dir(INTRO_AUDIO_DIR, "")
-    if chosen:
-        print(f"[intro] Selected: {os.path.basename(chosen)}")
-    else:
-        print(f"[intro] No intro audio found — skipping.")
+    """Pick one of your recorded intro files at random. Returns None if unavailable."""
+    supported = (".mp3", ".wav", ".ogg", ".m4a")
+    if not os.path.isdir(INTRO_AUDIO_DIR):
+        print(f"[intro] Folder '{INTRO_AUDIO_DIR}' not found — skipping intro audio.")
+        return None
+    files = [
+        os.path.join(INTRO_AUDIO_DIR, f)
+        for f in os.listdir(INTRO_AUDIO_DIR)
+        if f.lower().endswith(supported)
+    ]
+    if not files:
+        print(f"[intro] No audio files in '{INTRO_AUDIO_DIR}' — skipping intro audio.")
+        return None
+    chosen = random.choice(files)
+    print(f"[intro] Selected: {os.path.basename(chosen)}")
     return chosen
+
+
+# def fetch_puzzles(target_count):
+#     """
+#     Fetch puzzles from all PUZZLE_THEMES, de-duplicate by puzzle ID,
+#     and return exactly target_count unique puzzles (or as many as available).
+#     Retries themes if pool is too small to fill the target.
+#     """
+#     seen_ids   = set()
+#     unique     = []
+#     max_rounds = 3   # retry rounds if we don't have enough
+
+#     for round_num in range(max_rounds):
+#         if len(unique) >= target_count:
+#             break
+
+#         print(f"\n[fetch] Round {round_num + 1} — need {target_count - len(unique)} more puzzles")
+
+#         for theme_cfg in PUZZLE_THEMES:
+#             if len(unique) >= target_count:
+#                 break
+#             try:
+#                 params    = {**theme_cfg, "limit": 100}
+#                 param_str = "&".join(f"{k}={v}" for k, v in params.items())
+#                 url       = f"https://roynek.com/Chess_Sol_Puzzles/api/puzzles?{param_str}"
+#                 print(f"  Fetching: {url}")
+#                 resp = requests.get(url, timeout=30)
+#                 data = resp.json()
+
+#                 results = data.get("results", [])
+#                 before  = len(unique)
+
+#                 for p in results:
+#                     pid = p.get("id")
+#                     if pid and pid not in seen_ids:
+#                         seen_ids.add(pid)
+#                         unique.append(p)
+
+#                 added = len(unique) - before
+#                 print(f"  → +{added} new  (pool: {len(unique)}/{target_count})")
+
+#             except Exception as e:
+#                 print(f"  ✗ Error fetching theme {theme_cfg}: {e}")
+
+#     random.shuffle(unique)
+#     selected = unique[:target_count]
+
+#     print(f"\n[fetch] Total unique puzzles collected : {len(unique)}")
+#     print(f"[fetch] Selected for this video        : {len(selected)}")
+
+#     if len(selected) < target_count:
+#         print(f"[fetch] ⚠  Only {len(selected)} unique puzzles available — video will be shorter.")
+
+#     return selected
 
 
 def fetch_puzzles(target_count):
     """
-    Fetch puzzles from ACTIVE_PUZZLE_THEMES (series theme first, then the
-    general pool), de-duplicate by ID, and mix difficulty bands so a video
-    isn't just one flat rating range (growth-plan point #3).
+    Fetch puzzles using random offset strategy,
+    de-duplicate by puzzle ID.
     """
+
     seen_ids = set()
     unique = []
+
     max_rounds = 3
 
     for round_num in range(max_rounds):
@@ -176,20 +200,28 @@ def fetch_puzzles(target_count):
 
         print(f"\n[fetch] Round {round_num + 1} — need {target_count - len(unique)}")
 
-        for theme_cfg in ACTIVE_PUZZLE_THEMES:
+        for theme_cfg in PUZZLE_THEMES:
             if len(unique) >= target_count:
                 break
+
             try:
-                params = {**theme_cfg, "limit": 100, "random": "true"}
+                params = {
+                    **theme_cfg,
+                    "limit": 100,        # match backend cap
+                    "random": "true"
+                }
+
                 url = "https://roynek.com/Chess_Sol_Puzzles/api/puzzles"
                 print(f"  Fetching: {params}")
 
                 resp = requests.get(url, params=params, timeout=30)
                 data = resp.json()
+
                 results = data.get("results", [])
-                random.shuffle(results)
+                random.shuffle(results)   # 🔥 improves entropy per batch
 
                 before = len(unique)
+
                 for p in results:
                     pid = p.get("id")
                     if pid and pid not in seen_ids:
@@ -202,11 +234,13 @@ def fetch_puzzles(target_count):
             except Exception as e:
                 print(f"  ✗ Error fetching theme {theme_cfg}: {e}")
 
+    # Final shuffle before selection
     random.shuffle(unique)
     selected = unique[:target_count]
 
     print(f"\n[fetch] Total unique puzzles collected: {len(unique)}")
     print(f"[fetch] Selected for this video: {len(selected)}")
+
     if len(selected) < target_count:
         print(f"[fetch] ⚠ Only {len(selected)} puzzles available")
 
@@ -237,14 +271,21 @@ def send_to_social_media_api(platform, link, text, media=None, area=None,
 SQUARE_SIZE = BOARD_SIZE // 8
 
 def square_to_pixel(square):
-    col = chess.square_file(square)
-    row = 7 - chess.square_rank(square)
+    """
+    Return (cx, cy) pixel centre for a chess square.
+    Standard view: White at bottom.
+      file 0 (a) → left    file 7 (h) → right
+      rank 0     → bottom  rank 7     → top
+    """
+    col = chess.square_file(square)       # 0=a … 7=h
+    row = 7 - chess.square_rank(square)   # rank 8 → row 0 (top), rank 1 → row 7 (bottom)
     cx  = col * SQUARE_SIZE + SQUARE_SIZE // 2
     cy  = row * SQUARE_SIZE + SQUARE_SIZE // 2
     return cx, cy
 
 
 def draw_arrow(draw, from_sq, to_sq, color=(255, 170, 0, 220), shaft_w=18, head_size=36):
+    """Bold directional arrow from_sq → to_sq. Always standard orientation."""
     x1, y1 = square_to_pixel(from_sq)
     x2, y2 = square_to_pixel(to_sq)
 
@@ -271,37 +312,28 @@ def draw_arrow(draw, from_sq, to_sq, color=(255, 170, 0, 220), shaft_w=18, head_
 
 
 def load_fonts():
-    scale = FONT_STYLE["scale"]
     try:
         return (
-            ImageFont.truetype(FONT_PATH, int(60 * scale)),   # large  (countdown/hook)
-            ImageFont.truetype(FONT_PATH, int(30 * scale)),   # medium (rating / side)
-            ImageFont.truetype(FONT_PATH, int(24 * scale)),   # small  (puzzle number / message)
+            ImageFont.truetype(FONT_PATH, 60),   # large  (countdown)
+            ImageFont.truetype(FONT_PATH, 30),   # medium (rating / side)
+            ImageFont.truetype(FONT_PATH, 24),   # small  (puzzle number / message)
         )
     except Exception:
         fallback = ImageFont.load_default()
         return fallback, fallback, fallback
 
 
-def draw_text(draw, xy, text, font, fill):
-    """Text draw that honors this video's font style (bold via stroke)."""
-    stroke = FONT_STYLE.get("stroke", 0)
-    if stroke:
-        draw.text(xy, text, font=font, fill=fill, stroke_width=stroke, stroke_fill="black")
-    else:
-        draw.text(xy, text, font=font, fill=fill)
-
-
 def create_frame_image(board, last_move=None, arrow_move=None, arrow_color=None,
                        timer=None, rating=None, side_to_move=None,
-                       puzzle_num=None, total_puzzles=None, message=None,
-                       badge=None):
+                       puzzle_num=None, total_puzzles=None, message=None):
     """
-    Render one video frame. `badge` = (label, emoji, hex_color) difficulty tag.
+    Render one video frame.
+    arrow_move  : chess.Move  — arrow shown BEFORE the move executes
+    arrow_color : RGBA tuple  — gold (solver) or orange (opponent)
+    timer       : int         — countdown shown centre-board
     """
     svg_data = chess.svg.board(
-        board, size=BOARD_SIZE, lastmove=last_move, flipped=False,
-        colors=BOARD_THEME["colors"]
+        board, size=BOARD_SIZE, lastmove=last_move, flipped=False
     ).encode("UTF-8")
 
     tmp_png = os.path.join(TEMP_DIR, "_tmp_frame.png")
@@ -310,6 +342,7 @@ def create_frame_image(board, last_move=None, arrow_move=None, arrow_color=None,
     im   = Image.open(tmp_png).convert("RGBA")
     draw = ImageDraw.Draw(im, "RGBA")
 
+    # ── Arrow overlay ──────────────────────────────────────
     if arrow_move is not None:
         col = arrow_color if arrow_color else ARROW_COLOR_SOLVER
         draw_arrow(draw, arrow_move.from_square, arrow_move.to_square, color=col)
@@ -322,31 +355,26 @@ def create_frame_image(board, last_move=None, arrow_move=None, arrow_color=None,
     im.paste(bar, (0, 0), bar)
     draw  = ImageDraw.Draw(im, "RGBA")
 
+    # Puzzle counter  (top-right)
     if puzzle_num and total_puzzles:
         puz_text = f"Puzzle {puzzle_num}/{total_puzzles}"
         pbbox    = draw.textbbox((0, 0), puz_text, font=font_sm)
         pw       = pbbox[2] - pbbox[0]
-        draw_text(draw, (BOARD_SIZE - pw - 14, 10), puz_text, font_sm, "#AAAAAA")
+        draw.text((BOARD_SIZE - pw - 14, 10), puz_text, font=font_sm, fill="#AAAAAA")
 
-    draw_text(draw, (14, 10), f"Rating: {rating}", font_sm, "white")
-    draw_text(draw, (14, 40), f"{side_to_move} to move", font_md, "#FFD700")
+    # Rating + side  (top-left)
+    draw.text((14, 10), f"Rating: {rating}",       font=font_sm, fill="white")
+    draw.text((14, 40), f"{side_to_move} to move", font=font_md, fill="#FFD700")
 
-    # ── Difficulty badge (top-center) ───────────────────────
-    if badge:
-        label, emoji, color = badge
-        badge_text = f"{emoji} {label}"
-        bbbox = draw.textbbox((0, 0), badge_text, font=font_sm)
-        bw    = bbbox[2] - bbbox[0]
-        draw_text(draw, ((BOARD_SIZE - bw) // 2, 10), badge_text, font_sm, color)
-
-    # ── Message (bottom bar) ────────────────────────────────
+    # Message  (bottom bar)
     if message:
         msg_bar = Image.new("RGBA", (BOARD_SIZE, 42), (0, 0, 0, 150))
         im.paste(msg_bar, (0, BOARD_SIZE - 42), msg_bar)
         draw    = ImageDraw.Draw(im, "RGBA")
         mbbox   = draw.textbbox((0, 0), message, font=font_sm)
         mw      = mbbox[2] - mbbox[0]
-        draw_text(draw, ((BOARD_SIZE - mw) // 2, BOARD_SIZE - 36), message, font_sm, "lightblue")
+        draw.text(((BOARD_SIZE - mw) // 2, BOARD_SIZE - 36),
+                  message, font=font_sm, fill="lightblue")
 
     # ── Countdown ──────────────────────────────────────────
     if timer is not None:
@@ -356,71 +384,41 @@ def create_frame_image(board, last_move=None, arrow_move=None, arrow_color=None,
         cx   = (BOARD_SIZE - w) // 2
         cy   = (BOARD_SIZE - h) // 2
         draw.text((cx + 3, cy + 3), txt, font=font_lg, fill=(0, 0, 0, 180))
-        draw_text(draw, (cx, cy), txt, font_lg, "white")
-
-    im = ce.apply_zoom(im, ZOOM_VARIANT["factor"], BOARD_SIZE)
-    return im.convert("RGB")
-
-
-def create_hook_frame(hook_text):
-    """
-    The first thing viewers see. High-contrast, big text, no clutter —
-    designed to survive the 2-second scroll-past decision.
-    """
-    im   = Image.new("RGBA", (BOARD_SIZE, BOARD_SIZE), (10, 10, 15, 255))
-    draw = ImageDraw.Draw(im)
-    font_lg, font_md, font_sm = load_fonts()
-
-    draw.rectangle([(0, 0), (BOARD_SIZE, 10)], fill=ARROW_COLOR_SOLVER[:3])
-    draw.rectangle([(0, BOARD_SIZE - 10), (BOARD_SIZE, BOARD_SIZE)], fill=ARROW_COLOR_SOLVER[:3])
-
-    # Word-wrap the hook across up to 3 lines
-    words = hook_text.split()
-    lines, cur = [], ""
-    for w in words:
-        trial = (cur + " " + w).strip()
-        if draw.textlength(trial, font=font_lg) > BOARD_SIZE - 100:
-            lines.append(cur)
-            cur = w
-        else:
-            cur = trial
-    if cur:
-        lines.append(cur)
-
-    total_h = len(lines) * 80
-    y = (BOARD_SIZE - total_h) // 2
-    for line in lines:
-        bbox = draw.textbbox((0, 0), line, font=font_lg)
-        w = bbox[2] - bbox[0]
-        draw_text(draw, ((BOARD_SIZE - w) // 2, y), line, font_lg, "white")
-        y += 80
+        draw.text((cx,     cy),     txt, font=font_lg, fill="white")
 
     return im.convert("RGB")
 
 
 def create_transition_frame(next_puzzle_num, total_puzzles, theme_label=""):
+    """Dark transition card shown between puzzles."""
     im   = Image.new("RGBA", (BOARD_SIZE, BOARD_SIZE), (20, 20, 30, 255))
     draw = ImageDraw.Draw(im)
+
     font_lg, font_md, font_sm = load_fonts()
 
+    # Decorative top accent bar
     draw.rectangle([(0, 0), (BOARD_SIZE, 8)], fill="#FFD700")
     draw.rectangle([(0, BOARD_SIZE - 8), (BOARD_SIZE, BOARD_SIZE)], fill="#FFD700")
 
+    # "Next Puzzle" heading
     heading = "Next Puzzle"
     hbbox   = draw.textbbox((0, 0), heading, font=font_lg)
     hw      = hbbox[2] - hbbox[0]
-    draw_text(draw, ((BOARD_SIZE - hw) // 2, 270), heading, font_lg, "white")
+    draw.text(((BOARD_SIZE - hw) // 2, 270), heading, font=font_lg, fill="white")
 
+    # Puzzle number
     num_txt = f"{next_puzzle_num} / {total_puzzles}"
     nbbox   = draw.textbbox((0, 0), num_txt, font=font_md)
     nw      = nbbox[2] - nbbox[0]
-    draw_text(draw, ((BOARD_SIZE - nw) // 2, 360), num_txt, font_md, "#FFD700")
+    draw.text(((BOARD_SIZE - nw) // 2, 360), num_txt, font=font_md, fill="#FFD700")
 
+    # Theme label (optional)
     if theme_label:
         tbbox = draw.textbbox((0, 0), theme_label, font=font_sm)
         tw    = tbbox[2] - tbbox[0]
-        draw_text(draw, ((BOARD_SIZE - tw) // 2, 420), theme_label, font_sm, "#AAAAAA")
+        draw.text(((BOARD_SIZE - tw) // 2, 420), theme_label, font=font_sm, fill="#AAAAAA")
 
+    # Random motivational line
     tips = [
         "Stay focused  ♟",
         "Think before you move",
@@ -431,7 +429,7 @@ def create_transition_frame(next_puzzle_num, total_puzzles, theme_label=""):
     tip   = random.choice(tips)
     tbbox = draw.textbbox((0, 0), tip, font=font_sm)
     tw    = tbbox[2] - tbbox[0]
-    draw_text(draw, ((BOARD_SIZE - tw) // 2, 490), tip, font_sm, "#888888")
+    draw.text(((BOARD_SIZE - tw) // 2, 490), tip, font=font_sm, fill="#888888")
 
     return im.convert("RGB")
 
@@ -439,16 +437,16 @@ def create_transition_frame(next_puzzle_num, total_puzzles, theme_label=""):
 # ═══════════════════════════════════════════════════════════
 #  FRAME GENERATION
 # ═══════════════════════════════════════════════════════════
-def save_hook_frames(frame_count):
-    im = create_hook_frame(HOOK_TEXT)
-    for _ in range(FPS * HOOK_SEC):
-        im.save(os.path.join(TEMP_DIR, f"frame_{frame_count:06d}.png"))
-        frame_count += 1
-    return frame_count
-
-
 def save_puzzle_frames(board, moves, rating, side_to_move,
-                       puzzle_num, total_puzzles, frame_count, message, badge):
+                       puzzle_num, total_puzzles, frame_count, message):
+    """
+    Generate all frames for one puzzle and append to the frame sequence.
+    Returns updated frame_count.
+
+    Arrow color rule:
+      index 0, 2, 4… → opponent move → ORANGE
+      index 1, 3, 5… → solver  move  → GOLD
+    """
     def save(img):
         nonlocal frame_count
         img.save(os.path.join(TEMP_DIR, f"frame_{frame_count:06d}.png"))
@@ -462,7 +460,7 @@ def save_puzzle_frames(board, moves, rating, side_to_move,
 
     common = dict(rating=rating, side_to_move=side_to_move,
                   puzzle_num=puzzle_num, total_puzzles=total_puzzles,
-                  message=message, badge=badge)
+                  message=message)
 
     # 1 ── Intro hold ──────────────────────────────────────
     im = create_frame_image(working, **common)
@@ -474,6 +472,7 @@ def save_puzzle_frames(board, moves, rating, side_to_move,
         is_solver   = (i % 2 == 1)
         arrow_color = ARROW_COLOR_SOLVER if is_solver else ARROW_COLOR_OPPONENT
 
+        # Arrow preview
         im = create_frame_image(working, arrow_move=move,
                                 arrow_color=arrow_color, **common)
         save_n(im, FPS * ARROW_SEC)
@@ -481,21 +480,13 @@ def save_puzzle_frames(board, moves, rating, side_to_move,
         working.push(move)
 
         if i == 0:
-            # Opponent's first move → countdown (length/style varies per video)
-            if COUNTDOWN_STYLE["style"] == "hold_then_flash":
-                # Hold longer at the start, then a quick flash countdown at the end
-                hold_frames = int(FPS * COUNTDOWN_SEC * 0.6)
+            # Opponent's first move → full countdown
+            for sec in range(COUNTDOWN_SEC, 0, -1):
                 im = create_frame_image(working, last_move=move,
-                                        timer=None, **common)
-                save_n(im, hold_frames)
-                for sec in range(5, 0, -1):
-                    im = create_frame_image(working, last_move=move, timer=sec, **common)
-                    save_n(im, FPS)
-            else:
-                for sec in range(COUNTDOWN_SEC, 0, -1):
-                    im = create_frame_image(working, last_move=move, timer=sec, **common)
-                    save_n(im, FPS)
+                                        timer=sec, **common)
+                save_n(im, FPS)
         else:
+            # Solution moves → brief hold
             sol_common = {**common, "message": "Solution!"}
             im = create_frame_image(working, last_move=move, **sol_common)
             save_n(im, FPS * MOVE_SEC)
@@ -509,6 +500,7 @@ def save_puzzle_frames(board, moves, rating, side_to_move,
 
 
 def save_transition_frames(next_puzzle_num, total_puzzles, frame_count, theme_label=""):
+    """Render the between-puzzle transition card. Returns updated frame_count."""
     im = create_transition_frame(next_puzzle_num, total_puzzles, theme_label)
     for _ in range(FPS * BREAK_SEC):
         im.save(os.path.join(TEMP_DIR, f"frame_{frame_count:06d}.png"))
@@ -519,12 +511,16 @@ def save_transition_frames(next_puzzle_num, total_puzzles, frame_count, theme_la
 # ═══════════════════════════════════════════════════════════
 #  VIDEO ENCODING
 # ═══════════════════════════════════════════════════════════
-def encode_video(intro_file=None, music_file=None, click_file=None):
+def encode_video(intro_file=None):
+    """
+    Combine frames + intro voice (once, at start) + looped bg music + click.
+    Uses -stream_loop -1 on the music so it never runs out on long videos.
+    """
     video_part = f"-framerate {FPS} -i {TEMP_DIR}/frame_%06d.png"
 
     has_intro = intro_file is not None and os.path.exists(intro_file)
-    has_music = INCLUDE_BG_MUSIC and music_file is not None and os.path.exists(music_file)
-    has_click = click_file is not None and os.path.exists(click_file)
+    has_music = INCLUDE_BG_MUSIC and os.path.exists(BACKGROUND_MUSIC)
+    has_click = os.path.exists(CLICK_SOUND)
 
     inputs       = []
     filter_parts = []
@@ -538,13 +534,14 @@ def encode_video(intro_file=None, music_file=None, click_file=None):
         idx += 1
 
     if has_music:
-        inputs.append(f"-stream_loop -1 -i {music_file}")
+        # -stream_loop -1 keeps the music looping for the full video length
+        inputs.append(f"-stream_loop -1 -i {BACKGROUND_MUSIC}")
         filter_parts.append(f"[{idx}:a]volume={BG_MUSIC_VOLUME}[bg]")
         mix_labels.append("[bg]")
         idx += 1
 
     if has_click:
-        inputs.append(f"-i {click_file}")
+        inputs.append(f"-i {CLICK_SOUND}")
         filter_parts.append(f"[{idx}:a]volume={CLICK_VOLUME}[clk]")
         mix_labels.append("[clk]")
         idx += 1
@@ -592,13 +589,11 @@ print("=" * 60)
 print("  CHESS MARATHON VIDEO GENERATOR")
 print("=" * 60)
 
-# ── 1. Audio picks (each independently randomized, never repeats) ────
+# ── 1. Intro audio (picked once for the whole video) ──────
 intro_file = pick_intro_audio()
-music_file = pick_from_dir(BACKGROUND_MUSIC_DIR, BACKGROUND_MUSIC)
-click_file = pick_from_dir(CLICK_SOUND_DIR, CLICK_SOUND)
 
 # ── 2. Fetch puzzles ──────────────────────────────────────
-print(f"\n[1/3] Fetching {NUM_PUZZLES} unique puzzles for '{SERIES['label']}'...")
+print(f"\n[1/3] Fetching {NUM_PUZZLES} unique puzzles...")
 puzzles       = fetch_puzzles(NUM_PUZZLES)
 total_puzzles = len(puzzles)
 
@@ -609,10 +604,6 @@ if total_puzzles == 0:
 # ── 3. Generate frames ────────────────────────────────────
 print(f"\n[2/3] Generating frames for {total_puzzles} puzzles...")
 frame_count = 0
-puzzle_ids, ratings, difficulty_labels = [], [], []
-
-# Hook card first — this is what decides whether someone keeps watching
-frame_count = save_hook_frames(frame_count)
 
 for idx, puzzle_data in enumerate(puzzles, 1):
     pid = puzzle_data.get("id", "?")
@@ -633,21 +624,18 @@ for idx, puzzle_data in enumerate(puzzles, 1):
         solver_color = not board.turn
         side_to_move = "White" if solver_color == chess.WHITE else "Black"
         message      = random.choice(PUZZLE_MESSAGES)
-        badge        = ce.get_difficulty_badge(rating)
 
+        # Derive a short theme label from whichever config matched (best-effort)
         theme_label = puzzle_data.get("themes", "") or puzzle_data.get("q", "")
         if isinstance(theme_label, list):
             theme_label = ", ".join(theme_label[:2])
 
         frame_count = save_puzzle_frames(
             board, moves, rating, side_to_move,
-            idx, total_puzzles, frame_count, message, badge
+            idx, total_puzzles, frame_count, message
         )
 
-        puzzle_ids.append(str(pid))
-        ratings.append(str(rating))
-        difficulty_labels.append(badge[0])
-
+        # Transition card between puzzles (not after the last one)
         if idx < total_puzzles:
             frame_count = save_transition_frames(
                 idx + 1, total_puzzles, frame_count, theme_label
@@ -662,20 +650,25 @@ for idx, puzzle_data in enumerate(puzzles, 1):
 # ── 4. Encode ─────────────────────────────────────────────
 print(f"\n[3/3] Encoding video — {frame_count} frames...")
 print("      (This may take a while for long videos)")
-encode_video(intro_file=intro_file, music_file=music_file, click_file=click_file)
+encode_video(intro_file=intro_file)
 
-# ── 5. Social copy (no random countries/cities — see content_engine.py) ──
-base_msg  = random.choice(SOCIAL_MESSAGES).format(n=total_puzzles)
-safe_message = ce.build_caption(
-    base_msg, series_label=SERIES["label"], cta=CTA_TEXT,
-    hashtags=HASHTAGS, max_tags=4
-)
+# ── 5. Social copy ────────────────────────────────────────
+social_msg = random.choice(SOCIAL_MESSAGES).format(n=total_puzzles)
+tags       = " ".join(random.sample(HASHTAGS, min(4, len(HASHTAGS))))
+print(f"\n📢  Social copy: {social_msg}\n    {tags}")
 
+
+tags = " ".join(random.sample(HASHTAGS, 3))
+# full_message = f"{msg}\n\n{tags}\n\n@followers"
+full_message = f" {social_msg} {tags} . "
+safe_message = full_message.replace("\n", " ").strip()
+safe_message = full_message.encode("ascii", "ignore").decode()
+
+# puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/?puzzle={data['id']}"
+# puzzle_link = f"https://roynek.com/Chess_Sol_Puzzles/public/"
 puzzle_link = ""
-video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 
-# ── 6. Randomized delay so uploads don't land at the exact same minute ──
-ce.random_pre_post_delay(min_sec=30, max_sec=600)
+video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 
 output = send_to_social_media_api(
     platform='facebook',
@@ -685,31 +678,14 @@ output = send_to_social_media_api(
     area='6',
     fb_post_to="reels"
 )
+
 print("Facebook: Social API Response:", output)
 
-# ── 7. A/B test logging ───────────────────────────────────
-ce.log_analytics({
-    "timestamp": datetime.datetime.now().isoformat(timespec="seconds"),
-    "video_type": "marathon",
-    "board_theme": BOARD_THEME["name"],
-    "font_style": FONT_STYLE["name"],
-    "arrow_pair": ARROW_PAIR["name"],
-    "zoom": ZOOM_VARIANT["name"],
-    "countdown_style": COUNTDOWN_STYLE["name"],
-    "countdown_sec": COUNTDOWN_SEC,
-    "hook": HOOK_TEXT,
-    "message": base_msg,
-    "cta": CTA_TEXT,
-    "series_label": SERIES["label"],
-    "puzzle_ids": "|".join(puzzle_ids),
-    "ratings": "|".join(ratings),
-    "difficulty_labels": "|".join(difficulty_labels),
-    "hashtags": safe_message,
-    "output_video": OUTPUT_VIDEO,
-    "api_response": (output or "")[:200],
-})
+# Uncomment to auto-post:
+# video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
+# send_to_social_media_api('facebook', '', social_msg, video_url, area='6', fb_post_to='reels')
 
-# ── 8. Cleanup ────────────────────────────────────────────
+# ── 6. Cleanup ────────────────────────────────────────────
 print("\nCleaning up temporary frames...")
 for f in os.listdir(TEMP_DIR):
     os.remove(os.path.join(TEMP_DIR, f))
