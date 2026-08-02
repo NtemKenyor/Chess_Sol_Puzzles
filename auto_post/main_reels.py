@@ -450,44 +450,44 @@ safe_message = ce.build_caption(
 puzzle_link = ""
 video_url = f"https://roynek.com/Chess_Sol_Puzzles/auto_post/{OUTPUT_VIDEO}"
 
-# # Randomized delay so uploads don't all land at the exact same minute
-# ce.random_pre_post_delay(min_sec=30, max_sec=600)
+# Randomized delay so uploads don't all land at the exact same minute
+ce.random_pre_post_delay(min_sec=30, max_sec=600)
 
-# output = send_to_social_media_api(
-#     platform='facebook',
-#     link=puzzle_link,
-#     text=safe_message,
-#     media=video_url,
-#     area='6',
-#     fb_post_to="reels"
-# )
-# print("Facebook: Social API Response:", output)
+output = send_to_social_media_api(
+    platform='facebook',
+    link=puzzle_link,
+    text=safe_message,
+    media=video_url,
+    area='6',
+    fb_post_to="reels"
+)
+print("Facebook: Social API Response:", output)
 
-# # ── A/B test logging ──────────────────────────────────────
-# ce.log_analytics({
-#     "timestamp": datetime.datetime.now().isoformat(timespec="seconds"),
-#     "video_type": "reels",
-#     "board_theme": BOARD_THEME["name"],
-#     "font_style": FONT_STYLE["name"],
-#     "arrow_pair": ARROW_PAIR["name"],
-#     "zoom": ZOOM_VARIANT["name"],
-#     "countdown_style": COUNTDOWN_STYLE["name"],
-#     "countdown_sec": COUNTDOWN_SEC,
-#     "hook": HOOK_TEXT,
-#     "message": base_msg,
-#     "cta": CTA_TEXT,
-#     "series_label": SERIES["label"],
-#     "puzzle_ids": str(data.get("id", "")),
-#     "ratings": str(rating),
-#     "difficulty_labels": badge[0],
-#     "hashtags": safe_message,
-#     "output_video": OUTPUT_VIDEO,
-#     "api_response": (output or "")[:200],
-# })
+# ── A/B test logging ──────────────────────────────────────
+ce.log_analytics({
+    "timestamp": datetime.datetime.now().isoformat(timespec="seconds"),
+    "video_type": "reels",
+    "board_theme": BOARD_THEME["name"],
+    "font_style": FONT_STYLE["name"],
+    "arrow_pair": ARROW_PAIR["name"],
+    "zoom": ZOOM_VARIANT["name"],
+    "countdown_style": COUNTDOWN_STYLE["name"],
+    "countdown_sec": COUNTDOWN_SEC,
+    "hook": HOOK_TEXT,
+    "message": base_msg,
+    "cta": CTA_TEXT,
+    "series_label": SERIES["label"],
+    "puzzle_ids": str(data.get("id", "")),
+    "ratings": str(rating),
+    "difficulty_labels": badge[0],
+    "hashtags": safe_message,
+    "output_video": OUTPUT_VIDEO,
+    "api_response": (output or "")[:200],
+})
 
-# # ── Cleanup ────────────────────────────────────────────────
-# for f in os.listdir(TEMP_DIR):
-#     os.remove(os.path.join(TEMP_DIR, f))
-# os.rmdir(TEMP_DIR)
+# ── Cleanup ────────────────────────────────────────────────
+for f in os.listdir(TEMP_DIR):
+    os.remove(os.path.join(TEMP_DIR, f))
+os.rmdir(TEMP_DIR)
 
-# print(f"\n✅  Done — video saved to: {OUTPUT_VIDEO}")
+print(f"\n✅  Done — video saved to: {OUTPUT_VIDEO}")
