@@ -35,7 +35,7 @@ INTRO_AUDIO_DIR = random.choice(ls)    # ← point this at your folder
 
 # ── Background & Click Audio ──────────────────────────────
 # BACKGROUND_MUSIC = "bg_music.mp3"
-BACKGROUND_MUSIC = "bg_music_free.wav"
+BACKGROUND_MUSIC = "bg_music_free.mp3"
 CLICK_SOUND      = "move.mp3"
 BG_MUSIC_VOLUME  = 0.15   # very subtle (0.0 – 1.0)
 CLICK_VOLUME     = 0.65

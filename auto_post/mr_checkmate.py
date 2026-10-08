@@ -40,7 +40,7 @@ INTRO_AUDIO_DIR = random.choice(ls)
 
 # ── Background & Click Audio ──────────────────────────────
 # BACKGROUND_MUSIC = "bg_music.mp3" #the AI violen
-BACKGROUND_MUSIC = "bg_music_free.wav" #raw sound
+BACKGROUND_MUSIC = "bg_music_free.mp3" #raw sound
 # BACKGROUND_MUSIC = "bg_music.mp3" #the whale scream
 CLICK_SOUND      = "move.mp3"
 BG_MUSIC_VOLUME  = 0.12

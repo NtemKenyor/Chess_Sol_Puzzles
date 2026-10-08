@@ -41,7 +41,7 @@ ls = ["./intro_sounds", "/intro_fake"]
 INTRO_AUDIO_DIR = random.choice(ls)
 
 # ── Background & Click Audio ──────────────────────────────────
-BACKGROUND_MUSIC = "bg_music_free.wav"
+BACKGROUND_MUSIC = "bg_music_free.mp3"
 CLICK_SOUND      = "move.mp3"
 BG_MUSIC_VOLUME  = 0.15
 CLICK_VOLUME     = 0.65
